@@ -1,5 +1,7 @@
 tests/
 .vscode/
+*.db
+simulator/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

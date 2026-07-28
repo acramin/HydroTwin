@@ -1,5 +1,6 @@
 import streamlit as st
 import threading
+import asyncio
 
 from hydrotwin import (
     get_current_user,
@@ -11,6 +12,15 @@ from hydrotwin import (
     main as iniciar_comunicacao,
     logger
 )
+
+try:
+    loop = asyncio.get_running_loop()
+    def handle_async_exception(loop, context):
+        exception = context.get("exception")
+        logger.critical(f"Exceção no Asyncio: {context.get('message')}", exc_info=exception)
+    loop.set_exception_handler(handle_async_exception)
+except RuntimeError:
+    pass
 
 # Inicializa o backend em uma thread em background para não travar a tela
 if "backend_started" not in st.session_state:

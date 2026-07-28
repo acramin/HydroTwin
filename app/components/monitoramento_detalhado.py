@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 import pandas as pd
 import streamlit as st
 import altair as alt
@@ -9,9 +10,10 @@ from hydrotwin import (
     get_sensor_proc_ultimo,
     get_limites_bancada,
     detectar_anomalias,
-    analisar_tendencias
+    analisar_tendencias,
 )
 
+# --- CONSTANTES ---
 COLUNAS_PREVISAO = [
     "nome",
     "status",
@@ -31,7 +33,23 @@ COLUNAS_ANOMALIA = [
     "mensagem",
 ]
 
-def carregar_monitoramento_bancada(bancada_id, horas=24):
+VARIAVEIS_ZONA_FORTES = [
+    ("ph", "pH", ""),
+    ("ec", "EC", "mS/cm"),
+]
+
+COR_ZONA_SAUDAVEL = "#d1e7dd"
+COR_ZONA_ATENCAO = "#fff3cd"
+COR_ZONA_CRITICO = "#f8d7da"
+
+
+# --- CARREGAMENTO DE DADOS ---
+@st.cache_data(ttl=60)
+def carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> dict[str, Any]:
+    """Carrega e processa os dados de monitoramento da bancada.
+    
+    Utiliza cache de 60 segundos para otimizar re-execuções no Streamlit.
+    """
     df = get_raw_recent(bancada_id=bancada_id, horas=horas)
     proc = get_sensor_proc_ultimo(bancada_id)
 
@@ -45,16 +63,23 @@ def carregar_monitoramento_bancada(bancada_id, horas=24):
 
     limites = get_limites_bancada(bancada_id)
     resultado_tendencia = analisar_tendencias(df)
+    
+    # Tratamento defensivo no dicionário de tendências
     resultado_tendencia = {
         "status": resultado_tendencia.get("status", "Sem dados"),
         "score": resultado_tendencia.get("score", 0.0),
         "resumo": resultado_tendencia.get(
             "resumo",
-            (resultado_tendencia.get("tendencias") or [{}])[0].get("mensagem", "Sem dados suficientes para prever o comportamento."),
+            (resultado_tendencia.get("tendencias") or [{}])[0].get(
+                "mensagem", "Sem dados suficientes para prever o comportamento."
+            ),
         ),
-        "total_previsoes": resultado_tendencia.get("total_tendencias", len(resultado_tendencia.get("tendencias", []))),
+        "total_previsoes": resultado_tendencia.get(
+            "total_tendencias", len(resultado_tendencia.get("tendencias", []))
+        ),
         "previsoes": resultado_tendencia.get("tendencias", []),
     }
+    
     resultado_anomalias = detectar_anomalias(df) if not df.empty else None
 
     return {
@@ -65,42 +90,47 @@ def carregar_monitoramento_bancada(bancada_id, horas=24):
         "resultado_anomalias": resultado_anomalias,
     }
 
-def montar_df_previsoes(resultado_previsao):
-    previsoes = (resultado_previsao or {}).get("previsoes") or []
-    if not previsoes:
-        return pd.DataFrame(columns=COLUNAS_PREVISAO)
 
-    return pd.DataFrame(previsoes).reindex(columns=COLUNAS_PREVISAO)
+# --- FUNÇÕES AUXILIARES DE DATAFRAME ---
+def _montar_df_generico(dados_dict: dict | None, chave: str, colunas: list[str]) -> pd.DataFrame:
+    """Função genérica auxiliar para evitar duplicação de lógica entre previsões e anomalias."""
+    itens = (dados_dict or {}).get(chave) or []
+    if not itens:
+        return pd.DataFrame(columns=colunas)
 
-def montar_df_anomalias(resultado_anomalias):
-    anomalias = (resultado_anomalias or {}).get("anomalias") or []
-    if not anomalias:
-        return pd.DataFrame(columns=COLUNAS_ANOMALIA)
+    return pd.DataFrame(itens).reindex(columns=colunas)
 
-    return pd.DataFrame(anomalias).reindex(columns=COLUNAS_ANOMALIA)
 
-VARIAVEIS_ZONA_FORTES = [
-    ("ph", "pH", ""),
-    ("ec", "EC", "mS/cm"),
-]
+def montar_df_previsoes(resultado_previsao: dict | None) -> pd.DataFrame:
+    return _montar_df_generico(resultado_previsao, "previsoes", COLUNAS_PREVISAO)
 
-COR_ZONA_SAUDAVEL = "#d1e7dd"
-COR_ZONA_ATENCAO = "#fff3cd"
-COR_ZONA_CRITICO = "#f8d7da"
 
-def _serie_temporal(df, metrica):
+def montar_df_anomalias(resultado_anomalias: dict | None) -> pd.DataFrame:
+    return _montar_df_generico(resultado_anomalias, "anomalias", COLUNAS_ANOMALIA)
+
+
+def _serie_temporal(df: pd.DataFrame, metrica: str) -> pd.DataFrame:
     if metrica not in df.columns:
         return pd.DataFrame(columns=["dth_recebido", "valor"])
 
     serie = df[["dth_recebido", metrica]].copy()
     serie["valor"] = pd.to_numeric(serie[metrica], errors="coerce")
-    serie = serie[["dth_recebido", "valor"]].dropna().sort_values("dth_recebido")
-    return serie
+    return serie[["dth_recebido", "valor"]].dropna().sort_values("dth_recebido")
 
-def _bandas_zona(y_min_plot, y_max_plot, limite_min, limite_max):
+
+def _bandas_zona(
+    y_min_plot: float,
+    y_max_plot: float,
+    limite_min: float | None,
+    limite_max: float | None
+) -> list[dict[str, Any]]:
     bandas = []
 
     if limite_min is not None and limite_max is not None:
+        # Garante ordenação lógica caso limites estejam invertidos na origem
+        if limite_min > limite_max:
+            limite_min, limite_max = limite_max, limite_min
+
         amplitude = max(limite_max - limite_min, 1e-6)
         faixa_atencao = amplitude * 0.15
         ideal_core_min = min(limite_max, limite_min + faixa_atencao)
@@ -109,9 +139,9 @@ def _bandas_zona(y_min_plot, y_max_plot, limite_min, limite_max):
         bandas.extend(
             [
                 {"y0": y_min_plot, "y1": limite_min, "cor": COR_ZONA_CRITICO, "zona": "Crítico (abaixo do limite)"},
-                {"y0": limite_min, "y1": ideal_core_min, "cor": COR_ZONA_ATENCAO, "zona": "Atenção (proximo ao limite)"},
+                {"y0": limite_min, "y1": ideal_core_min, "cor": COR_ZONA_ATENCAO, "zona": "Atenção (próximo ao limite)"},
                 {"y0": ideal_core_min, "y1": ideal_core_max, "cor": COR_ZONA_SAUDAVEL, "zona": "Saudável (faixa ideal)"},
-                {"y0": ideal_core_max, "y1": limite_max, "cor": COR_ZONA_ATENCAO, "zona": "Atenção (proximo ao limite)"},
+                {"y0": ideal_core_max, "y1": limite_max, "cor": COR_ZONA_ATENCAO, "zona": "Atenção (próximo ao limite)"},
                 {"y0": limite_max, "y1": y_max_plot, "cor": COR_ZONA_CRITICO, "zona": "Crítico (acima do limite)"},
             ]
         )
@@ -134,7 +164,9 @@ def _bandas_zona(y_min_plot, y_max_plot, limite_min, limite_max):
 
     return [b for b in bandas if b["y1"] > b["y0"]]
 
-def render_legenda_zonas():
+
+# --- COMPONENTES VISUAIS ---
+def render_legenda_zonas() -> None:
     st.markdown(
         """
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 12px 0;">
@@ -159,30 +191,40 @@ def render_legenda_zonas():
         unsafe_allow_html=True,
     )
 
-def render_grafico_linha(df, metrica, titulo, unidade=""):
+
+def render_grafico_linha(df: pd.DataFrame, metrica: str, titulo: str, unidade: str = "") -> None:
     serie = _serie_temporal(df, metrica)
     st.subheader(titulo)
 
     if serie.empty:
-        st.info(f"{titulo}: sem leituras validas para exibir.")
+        st.info(f"{titulo}: sem leituras válidas para exibir.")
         return
 
     base = alt.Chart(serie).encode(
-        x=alt.X("dth_recebido:T", title="Horario"),
+        x=alt.X("dth_recebido:T", title="Horário"),
         y=alt.Y("valor:Q", title=unidade or "valor"),
     )
     grafico = base.mark_line(color="#1f77b4", strokeWidth=2).encode(
         tooltip=[
-            alt.Tooltip("dth_recebido:T", title="Horario"),
+            alt.Tooltip("dth_recebido:T", title="Horário"),
             alt.Tooltip("valor:Q", title=titulo, format=".3f"),
         ]
     ).interactive()
+
     st.altair_chart(grafico.properties(height=220), width='stretch')
 
-def render_grafico_zona(df, metrica, titulo, limites, unidade="", mostrar_limites=False):
+
+def render_grafico_zona(
+    df: pd.DataFrame,
+    metrica: str,
+    titulo: str,
+    limites: dict | None,
+    unidade: str = "",
+    mostrar_limites: bool = False,
+) -> None:
     serie = _serie_temporal(df, metrica)
     if serie.empty:
-        st.info(f"{titulo}: sem leituras validas para exibir.")
+        st.info(f"{titulo}: sem leituras válidas para exibir.")
         return
 
     limite_min, limite_max = (limites or {}).get(metrica, (None, None))
@@ -222,7 +264,7 @@ def render_grafico_zona(df, metrica, titulo, limites, unidade="", mostrar_limite
     )
 
     base = alt.Chart(serie).encode(
-        x=alt.X("dth_recebido:T", title="Horario"),
+        x=alt.X("dth_recebido:T", title="Horário"),
         y=alt.Y("valor:Q", title=unidade or "valor", scale=alt.Scale(domain=[y_min_plot, y_max_plot])),
     )
 
@@ -245,7 +287,7 @@ def render_grafico_zona(df, metrica, titulo, limites, unidade="", mostrar_limite
     camadas.append(
         base.mark_line(color="#1f77b4", strokeWidth=2).encode(
             tooltip=[
-                alt.Tooltip("dth_recebido:T", title="Horario"),
+                alt.Tooltip("dth_recebido:T", title="Horário"),
                 alt.Tooltip("valor:Q", title=titulo, format=".3f"),
             ]
         )
@@ -271,7 +313,7 @@ def render_grafico_zona(df, metrica, titulo, limites, unidade="", mostrar_limite
 
     if mostrar_limites:
         if limite_min is None and limite_max is None:
-            st.caption("Sem limites configurados para esta variável. Exibindo apenas serie temporal.")
+            st.caption("Sem limites configurados para esta variável. Exibindo apenas série temporal.")
         elif limite_min is not None and limite_max is not None:
             st.caption(f"Faixa ideal: {limite_min:.2f} a {limite_max:.2f} {unidade}".strip())
         elif limite_min is not None:

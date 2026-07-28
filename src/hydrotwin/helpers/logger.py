@@ -29,6 +29,66 @@ class DuplicateFilter(Filter):
         self.last_logged[msg] = now
         return True  # Permite o log
 
+
+import threading
+import asyncio
+
+def setup_global_exception_handlers():
+    """
+    Redireciona todas as exceções não tratadas do Python para o Logger.
+    """
+
+    # 1. Captura erros em código Síncrono e Thread Principal
+    def handle_sys_exception(exc_type, exc_value, exc_traceback):
+        # Permite que o Ctrl+C (KeyboardInterrupt) encerre o programa normalmente
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+
+        logging.critical(
+            "Exceção não tratada (Main Thread):", 
+            exc_info=(exc_type, exc_value, exc_traceback)
+        )
+
+    sys.excepthook = handle_sys_exception
+
+
+    # 2. Captura erros em Threads Secundárias (threading)
+    def handle_thread_exception(args):
+        if issubclass(args.exc_type, KeyboardInterrupt):
+            return
+
+        logging.critical(
+            f"Exceção não tratada na Thread [{args.thread.name}]:", 
+            exc_info=(args.exc_type, args.exc_value, args.exc_traceback)
+        )
+
+    threading.excepthook = handle_thread_exception
+
+
+    # 3. Captura erros dentro do Event Loop do Asyncio
+    def handle_async_exception(loop, context):
+        exception = context.get("exception")
+        message = context.get("message")
+        
+        # Trata ou silencia erros comuns de desconexão no Windows se desejar
+        if isinstance(exception, ConnectionResetError):
+            logging.warning(f"Conexão encerrada pelo host remoto no asyncio: {exception}")
+            return
+
+        logging.critical(
+            f"Exceção não tratada no Asyncio: {message}", 
+            exc_info=exception
+        )
+
+    # Aplica o handler do asyncio no loop atual
+    try:
+        loop = asyncio.get_running_loop()
+        loop.set_exception_handler(handle_async_exception)
+    except RuntimeError:
+        # Se o loop ainda não estiver rodando, pode registrar quando iniciar o asyncio.run()
+        pass
+
 def setup_logger():
     # Cria o logger raiz do seu projeto
     logger = logging.getLogger("hydrotwin")
@@ -89,6 +149,9 @@ def setup_logger():
         logger.addHandler(email_handler)
     except Exception as e:
         logger.warning(f"Não foi possível configurar o SMTPHandler: {e}")
+
+    # ATIVA OS HOOKS GLOBAIS DE EXCEÇÃO
+    setup_global_exception_handlers()
 
     return logger
 

@@ -3,6 +3,7 @@ tests/
 *.db
 simulator/
 *.db.*
+*.log.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

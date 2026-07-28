@@ -22,16 +22,14 @@ try:
 except RuntimeError:
     pass
 
-# Inicializa o backend em uma thread em background para não travar a tela
-if "backend_started" not in st.session_state:
-    logger.info("Iniciando backend em segundo plano a partir do Streamlit...")
-    
-    # Dispara a função main() dentro de uma thread dedicada
-    backend_thread = threading.Thread(target=iniciar_comunicacao, daemon=True)
+@st.cache_resource
+def iniciar_backend_global():
+    logger.info("Iniciando thread global do backend HydroTwin...")
+    backend_thread = threading.Thread(target=iniciar_comunicacao, daemon=True, name="BackendMain")
     backend_thread.start()
-    
-    # Salva no estado do Streamlit para nunca mais tentar rodar de novo nos cliques
-    st.session_state.backend_started = True
+    return True
+
+iniciar_backend_global()
 
 conn = conectar_db()
 

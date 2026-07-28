@@ -119,8 +119,6 @@ col1, col2 = st.columns(2)
 
 col3, col4 = st.columns(2)
 
-col4, col6 = st.columns(2)
-
 if "temperatura_ambiente" in df.columns:
     col1.subheader("Temperatura Ambiente")
     col1.line_chart(df.set_index("dth_recebido")["temperatura_ambiente"])
@@ -155,8 +153,6 @@ if "nivel_tanque" in df.columns:
 else:
     col4.subheader("Nível de Água")
     col4.info("Sem coluna de nível de tanque nas leituras recentes.")
-
-
 
 st.subheader("Detecção de anomalias", help="Identifique comportamentos incomuns nos dados. \n\nAnomalias são pontos de dados que se desviam significativamente do comportamento esperado, indicando possíveis problemas no sistema.")
 if not resultado_anomalias:

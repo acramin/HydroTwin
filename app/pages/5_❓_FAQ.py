@@ -1,143 +1,179 @@
+from __future__ import annotations
+
 import streamlit as st
 
-st.set_page_config(page_title="Hydroponic Monitor", layout="wide", page_icon="🌱")
+# Configuração da Página
+st.set_page_config(page_title="Central de Ajuda - HydroTwin", layout="wide", page_icon="❓")
 
-st.title("❓ FAQ")
-st.caption("Resumo das funcionalidades do HydroTwin e guia rápido de interpretação das informações exibidas nas demais páginas.")
+# ==========================================
+# ❓ CABEÇALHO DA PÁGINA
+# ==========================================
+st.title("❓ Central de Ajuda & FAQ")
+st.caption("Guia rápido de uso, interpretação de status e respostas para as principais dúvidas do HydroTwin.")
 
-st.markdown(
-	"""
-	O HydroTwin foi pensado para centralizar o cadastro, o acompanhamento e a leitura operacional de bancadas hidropônicas.
-	A plataforma organiza os dados coletados pelos sensores, calcula indicadores consolidados e destaca alertas, anomalias e tendências
-	para facilitar a tomada de decisão.
+# Resumo do Projeto em Container
+with st.container(border=True):
+    st.markdown(
+        """
+        O **HydroTwin** centraliza o cadastro, o acompanhamento e a leitura operacional de bancadas hidropônicas.
+        A plataforma organiza os dados coletados pelos sensores, calcula indicadores consolidados e destaca **alertas, anomalias e tendências** para facilitar a tomada de decisão rápida no campo.
+        """
+    )
 
-	O acesso é controlado por login: novos usuários são cadastrados como `viewer` e o usuário `admin` com role `admin` é o único que pode cadastrar bancadas.
-	"""
-)
+    # Indicadores Rápidos da Plataforma
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric("Páginas do Sistema", "4", help="Visão Geral, Detalhado, Painel e Ajuda")
+    with m2:
+        st.metric("Níveis de Status", "3", help="Saudável, Atenção e Crítico")
+    with m3:
+        st.metric("Profundidade de Leitura", "Resumo + Detalhado")
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Páginas principais", "4")
-col2.metric("Status possíveis", "3")
-col3.metric("Nível de leitura", "Resumo + detalhe")
+st.divider()
 
-st.subheader("O que o sistema faz")
-st.markdown(
-	"""
-	- **Cadastra bancadas e culturas** para vincular cada área de cultivo ao seu contexto.
-	- **Recebe leituras dos sensores** e grava os dados brutos no banco.
-	- **Processa os dados automaticamente** para gerar status, score e histórico.
-	- **Detecta alertas, anomalias e tendência operacional** para sinalizar riscos e mudanças no comportamento da bancada.
-	- **Exibe uma visão geral e uma visão detalhada** para apoiar a leitura rápida e a análise técnica.
-	"""
-)
+# ==========================================
+# 📊 GUIA DE INTERPRETAÇÃO DE STATUS
+# ==========================================
+st.subheader("🟢🟡🔴 Como Interpretar os Status do Sistema")
+st.markdown("O sistema analisa os dados brutos e consolida o estado de cada bancada com base nos limites operacionais:")
 
-st.subheader("Como interpretar os status")
-st.markdown(
-	"""
-	- **Saudável**: os indicadores estão dentro do esperado para a janela analisada.
-	- **Atenção**: algum sensor ou métrica começou a se aproximar de limites sensíveis.
-	- **Crítico**: há forte indício de condição fora do padrão ou de risco operacional elevado.
+col_s1, col_s2, col_s3 = st.columns(3)
 
-	Na página de monitoramento detalhado, o **status consolidado** combina risco atual, anomalia e tendência operacional.
-	Isso reduz ambiguidades quando um indicador aponta normalidade e outro aponta risco.
-	"""
-)
+with col_s1:
+    st.success("**🟢 Saudável**")
+    st.caption("Todos os indicadores (pH, EC, temperatura, nível) estão dentro da faixa ideal esperada para a cultura.")
 
-st.subheader("Perguntas rápidas")
+with col_s2:
+    st.warning("**🟡 Atenção**")
+    st.caption("Um ou mais sensores começaram a se aproximar dos limites críticos. Exige acompanhamento preventivo.")
 
-with st.expander("Como cadastrar uma bancada?"):
-	st.write(
-		"Na página **Cadastrar Bancada**, informe o nome da bancada, selecione a cultura e defina a data de início. "
-		"Se a bancada já existir, escolha-a e adicione mais filetes."
-	)
-
-with st.expander("O que vejo na página Visão Geral?"):
-	st.markdown(
-		"""
-		A página **Visão Geral** mostra três blocos principais:
-
-		- **Status das bancadas**: resumo rápido do estado atual de cada bancada.
-		- **Indicadores gerais**: KPIs derivados da última leitura processada, como nível do tanque, pH, EC,
-		  umidade, temperatura e vazão.
-		- **Alertas ativos**: mensagens das condições que ainda exigem atenção.
-		"""
-	)
-	st.info(
-		"Se não houver leitura processada ainda, o sistema exibirá mensagens de orientação para indicar que os dados brutos "
-		"ainda não foram suficientes para gerar KPIs ou status."
-	)
-
-with st.expander("Como interpretar os indicadores da Visão Geral?"):
-	st.markdown(
-		"""
-		- **Status da bancada**: representa a leitura mais recente consolidada para cada bancada.
-		- **Nível do tanque**: aparece como **OK** quando a leitura está acima do limiar interno e como **Baixo** quando está abaixo.
-		- **pH e EC**: indicam se a solução nutritiva está dentro da faixa esperada da cultura cadastrada.
-		- **Umidade, temperatura e vazão**: ajudam a avaliar o ambiente e a circulação da água.
-		- **Alertas ativos**: indicam situações que ainda não foram resolvidas no banco.
-		"""
-	)
-
-with st.expander("O que muda no Monitoramento Detalhado?"):
-	st.markdown(
-		"""
-		A página **Monitoramento Detalhado** aprofunda a análise de uma bancada específica.
-
-		- **Status consolidado**: leitura unificada do estado da bancada.
-		- **Score consolidado**: severidade agregada entre risco, anomalia e tendência.
-		- **Score de risco**: reflete o risco estatístico da janela processada.
-		- **Gráficos por variável**: mostram a evolução das métricas com opção de visualização por **Zona** ou por **Linha**.
-		- **Contribuição do risco**: ajuda a entender quais sensores mais pesaram no estado atual.
-		- **Anomalias**: destacam medições fora do padrão esperado.
-		- **Tendência operacional**: indica se a bancada está melhorando, piorando ou se mantendo estável.
-		- **Leituras recentes**: exibem os dados brutos mais novos para conferência.
-		"""
-	)
-
-with st.expander("Como interpretar os gráficos por variável?"):
-	st.markdown(
-		"""
-		- **Modo Zona**: sobrepõe faixas de risco para facilitar a leitura de valores fora do esperado.
-		- **Modo Linha**: mostra apenas a evolução temporal, útil para observar tendência.
-		- **Faixas coloridas**: ajudam a perceber rapidamente quando uma variável entra em atenção ou em criticidade.
-		"""
-	)
-
-with st.expander("O que significam anomalia e tendência operacional?"):
-	st.markdown(
-		"""
-		- **Anomalia** identifica comportamentos estatisticamente incomuns na janela recente.
-		- **Tendência operacional** resume a direção do comportamento recente, considerando consistência, força e estabilidade.
-		- **Score mais alto** significa maior severidade ou maior confiança de que a mudança merece atenção.
-		"""
-	)
-
-with st.expander("Como usar a simulação?"):
-	st.write(
-		"Na tela inicial, a simulação gera leituras falsas em intervalos curtos para testar o fluxo de cadastro, processamento, "
-		"visualização e alertas sem depender de sensores físicos."
-	)
-
-st.subheader("Perguntas frequentes")
-
-st.markdown(
-	"""
-	**Por que a Visão Geral e o Monitoramento Detalhado podem mostrar diferenças?**
-
-	A Visão Geral prioriza um resumo rápido da última leitura consolidada. Já o Monitoramento Detalhado analisa uma bancada isoladamente,
-	com mais contexto de janela, tendência, anomalia e séries históricas.
-
-	**Por que posso ver "Sem dados"?**
-
-	Isso acontece quando ainda não houve leituras suficientes para processar a bancada ou quando o cadastro existe, mas os dados de sensores
-	ainda não foram recebidos.
-
-	**Os alertas somem automaticamente?**
-
-	Eles são resolvidos quando o estado volta a ficar saudável e o processamento consolida essa mudança.
-	"""
-)
+with col_s3:
+    st.error("**🔴 Crítico**")
+    st.caption("Condição fora do padrão ou alto risco operacional detectado. Requer intervenção técnica imediata.")
 
 st.info(
-	"Para mais informações e documentação do projeto acesse o repositório oficial: [HydroTwin Documentation](https://github.com/acramin/hydrotwin)"
+    "💡 **Status Consolidado:** Na página de monitoramento detalhado, o status combina **risco atual, anomalia e tendência**. "
+    "Isso evita ambiguidades quando um indicador parece normal, mas a tendência aponta para um problema futuro."
+)
+
+st.divider()
+
+# ==========================================
+# 📚 PERGUNTAS FREQUENTES (ORGANIZADAS EM ABAS)
+# ==========================================
+st.subheader("📖 Perguntas Frequentes & Funcionalidades")
+
+tab_passos, tab_geral, tab_detalhado, tab_simulacao = st.tabs([
+    "🚀 Primeiros Passos",
+    "📊 Visão Geral",
+    "🔍 Monitoramento Detalhado",
+    "⚙️ Permissões & Simulação"
+])
+
+# --- TAB 1: PRIMEIROS PASSOS ---
+with tab_passos:
+    st.markdown("### 🚀 Começando com o HydroTwin")
+    
+    with st.expander("O que o sistema faz de forma geral?"):
+        st.markdown(
+            """
+            - **Cadastra bancadas e culturas:** Vincula cada área de cultivo à sua planta correspondente.
+            - **Recebe leituras dos sensores:** Armazena histórico bruto de pH, EC, temperatura, umidade e nível.
+            - **Processamento automático:** Calcula *scores*, detecta tendências e identifica anomalias.
+            - **Geração de alertas:** Notifica quando algum parâmetro sai da zona segura.
+            """
+        )
+
+    with st.expander("Como cadastrar uma nova bancada?"):
+        st.markdown(
+            """
+            1. Acesse o **Painel de Controle** no menu lateral.
+            2. Abra a aba **➕ Nova Bancada**.
+            3. Informe o **Nome da Bancada**, selecione a **Cultura Inicial** e defina a **Data de Plantio**.
+            4. Clique em **💾 Cadastrar Bancada**.
+            
+            *(Nota: Apenas usuários com perfil **Admin** podem cadastrar novas bancadas).*
+            """
+        )
+
+# --- TAB 2: VISÃO GERAL ---
+with tab_geral:
+    st.markdown("### 📊 Entendendo a Visão Geral")
+
+    with st.expander("O que vejo na página Visão Geral?"):
+        st.markdown(
+            """
+            A página **Visão Geral** foi desenhada para leitura rápida em *dashboards* de acompanhamento:
+            * **Status das Bancadas:** Resumo de cor e estado atual de todas as bancadas ativas.
+            * **Indicadores Gerais (KPIs):** Valores consolidados mais recentes de pH, EC, Temperatura, Umidade e Nível do Tanque.
+            * **Alertas Ativos:** Lista centralizada de problemas que exigem atenção imediata.
+            """
+        )
+
+    with st.expander("Como interpretar os KPIs da Visão Geral?"):
+        st.markdown(
+            """
+            * **pH e EC:** Indicam se a solução nutritiva está balanceada para a cultura ativa.
+            * **Nível do Tanque:** Exibe **OK** para nível adequado e **Baixo** quando necessita reabastecimento.
+            * **Temperatura e Umidade:** Auxiliam na gestão do microclima e circulação da solução.
+            """
+        )
+
+    with st.expander("Por que aparece 'Sem Dados' ou 'Nenhum KPI'?"):
+        st.write(
+            "Isso ocorre quando a bancada foi cadastrada recentemente e os sensores físicos "
+            "(ou o simulador) ainda não enviaram leituras suficientes para os cálculos estatísticos."
+        )
+
+# --- TAB 3: MONITORAMENTO DETALHADO ---
+with tab_detalhado:
+    st.markdown("### 🔍 Análise Aprofundada & Gráficos")
+
+    with st.expander("O que muda na página Monitoramento Detalhado?"):
+        st.markdown(
+            """
+            Esta página foca em **uma bancada por vez** e traz diagnósticos avançados:
+            * **Score de Risco:** Nível de severidade calculado a partir da janela de leituras.
+            * **Contribuição do Risco:** Mostra exatamente qual variável (ex: pH) está pesando mais para o alerta.
+            * **Anomalias:** Destaque visual de medições estatisticamente fora do padrão histórico.
+            * **Tendência Operacional:** Indica se a condição da bancada está *Melhorando*, *Estável* ou *Piorando*.
+            """
+        )
+
+    with st.expander("Como usar os modos de visualização dos gráficos (Zona vs. Linha)?"):
+        st.markdown(
+            """
+            * **Modo Zona:** Exibe faixas coloridas indicando os limites ideais, de atenção e críticos de cada parâmetro.
+            * **Modo Linha:** Foca na evolução temporal contínua da métrica para facilitar a visualização de tendências.
+            """
+        )
+
+# --- TAB 4: PERMISSÕES & SIMULAÇÃO ---
+with tab_simulacao:
+    st.markdown("### ⚙️ Perfis de Acesso e Testes")
+
+    with st.expander("Quais são os perfis de acesso (Roles)?"):
+        st.markdown(
+            """
+            * **`admin` (Administrador):** Possui permissão total para cadastrar bancadas, adicionar filetes e alterar configurações.
+            * **`viewer` (Visualizador):** Perfil padrão de novos cadastros. Pode visualizar dashboards, gráficos e alertas, mas não realiza alterações.
+            """
+        )
+
+    with st.expander("Para que serve a Simulação?"):
+        st.write(
+            "A simulação gera telemetria sintética (dados falsos de sensores) em intervalos curtos. "
+            "Ela serve para testar e demonstrar todas as funcionalidades de alertas, gráficos e "
+            "processamento do HydroTwin mesmo sem sensores físicos conectados no momento."
+        )
+
+st.divider()
+
+# ==========================================
+# 🔗 RODAPÉ & REPOSITÓRIO
+# ==========================================
+st.markdown("### ❓ Dúvidas não encontradas?")
+st.info(
+    "📖 Para consultar a documentação técnica completa, código fonte e arquitetura do projeto, "
+    "acesse o repositório oficial no GitHub: **[HydroTwin GitHub Repository](https://github.com/acramin/hydrotwin)**"
 )

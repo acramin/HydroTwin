@@ -207,6 +207,11 @@ def inserir_leitura_sensor(conn, dados: tuple) -> int:
     
     Retorna o bancada_id associado ao registro.
     """
+    import sqlite3
+
+    if not isinstance(conn, sqlite3.Connection) :
+        conn = conectar_db()
+        
     cursor = conn.cursor()
     try:
         cursor.execute("""

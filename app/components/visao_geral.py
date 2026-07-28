@@ -1,57 +1,82 @@
-import pandas as pd
+from __future__ import annotations
 
+from typing import Any
 from hydrotwin import (
     formatar_data,
     get_bancadas,
     get_sensor_proc_ultimo,
-    get_alertas_ativos
+    get_alertas_ativos,
 )
 
-def get_last_status():
-    status = {}
-    
-    for bancada_id, nome, *_ in get_bancadas():
-        
-        if not bancada_id:
-            return
-        
+def get_last_status() -> dict[str, dict[str, Any]]:
+    """Retorna o status atual e a data de atualização aninhados por bancada."""
+    status_bancadas = {}
+    bancadas = get_bancadas() or []
+
+    for bancada in bancadas:
+        if not bancada or not bancada[0]:
+            continue
+
+        bancada_id, nome = bancada[0], bancada[1]
         leitura = get_sensor_proc_ultimo(bancada_id)
 
         if leitura:
-            status[nome] = leitura.get("status_exibicao")
-            status["atualizado_em"] = formatar_data(leitura["dth_calculado"])
-            continue
+            status_bancadas[nome] = {
+                "status": leitura.get("status_exibicao", "Sem dados"),
+                "atualizado_em": formatar_data(leitura.get("dth_calculado")),
+            }
         else:
-            status[nome] = "Sem dados"
-            status["atualizado_em"] = "N/A"
+            status_bancadas[nome] = {
+                "status": "Sem dados",
+                "atualizado_em": "N/A",
+            }
 
-    return status
+    return status_bancadas
 
-def get_kpis(bancada_id, nome):
-    kpis = {}
-    
+
+def get_kpis(bancada_id: int | str) -> dict[str, Any]:
+    """Retorna o dicionário de KPIs recentes para uma bancada específica."""
     leitura = get_sensor_proc_ultimo(bancada_id)
-    
-    if leitura:
-        kpis[nome] = {}
-        # nivel_tanque é categórico: 100=Normal, 0=Abaixo
-        nivel_mean = leitura["nivel_tanque_mean"]
-        kpis[nome]["nível tanque"] = "Normal" if nivel_mean >= 50 else "Abaixo"
-        kpis[nome]["ph"] = leitura["ph_mean"]
-        kpis[nome]["ec"] = leitura["ec_mean"]
-        kpis[nome]["umidade"] = leitura["umidade_mean"]
-        kpis[nome]["temperatura_ambiente"] = leitura["temperatura_ambiente_mean"]
-        kpis[nome]["temperatura_água"] = leitura["temperatura_agua_mean"]
-        kpis[nome]["luminosidade"] = leitura["luminosidade_mean"]
+    if not leitura:
+        return {}
 
-    return kpis
+    # nivel_tanque é categórico: >= 50 é Normal, < 50 é Abaixo
+    nivel_mean = leitura.get("nivel_tanque_mean")
+    status_nivel = (
+        "Normal" if (nivel_mean is not None and nivel_mean >= 50) else "Abaixo"
+    )
 
-def get_alertas():
+    return {
+        "nivel_tanque": status_nivel,
+        "ph": leitura.get("ph_mean"),
+        "ec": leitura.get("ec_mean"),
+        "umidade": leitura.get("umidade_mean"),
+        "temperatura_ambiente": leitura.get("temperatura_ambiente_mean"),
+        "temperatura_agua": leitura.get("temperatura_agua_mean"),
+        "luminosidade": leitura.get("luminosidade_mean"),
+    }
+
+
+def get_alertas() -> list[dict[str, Any]]:
+    """Retorna alertas ativos estruturados para facilitar renderização no frontend."""
     alertas = []
-    
-    for bancada_id, nome, *_ in get_bancadas():
-        alertas_bancada = get_alertas_ativos(bancada_id)
+    bancadas = get_bancadas() or []
+
+    for bancada in bancadas:
+        if not bancada or not bancada[0]:
+            continue
+
+        bancada_id, nome = bancada[0], bancada[1]
+        alertas_bancada = get_alertas_ativos(bancada_id) or []
+
         for alerta in alertas_bancada:
-            alertas.append(f"{nome}: {alerta['mensagem']}")
+            mensagem = alerta.get("mensagem", "Alerta sem descrição")
+            alertas.append({
+                "bancada": nome,
+                "bancada_id": bancada_id,
+                "mensagem": mensagem,
+                "nivel": alerta.get("nivel", "atencao"),
+                "texto_formatado": f"{nome}: {mensagem}",
+            })
 
     return alertas

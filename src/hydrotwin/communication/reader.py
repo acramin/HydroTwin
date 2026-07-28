@@ -54,7 +54,7 @@ def db_writer():
             with bancadas_lock:
                 bancadas_ativas.add(bancada_id)
 
-            logger.debug(f"Salvo no banco: {dados}")
+            #logger.debug(f"Salvo no banco: {dados}")
 
         except Exception as e:
             logger.error(f"Erro ao salvar no banco (realizando rollback): {e}")
@@ -123,6 +123,7 @@ def transport_reader(transport):
     while not stop_event.is_set():
         try:
             linha = transport.receber()
+            ready_event.set()
 
             if linha:
                 logger.debug(f"Recebido raw: {linha.strip()}")
@@ -189,7 +190,6 @@ def transport_reader(transport):
         pass
 
     logger.info("Transport Reader encerrado.")
-
 
 # ================= MONITOR =================
 def monitor_comunicacao():

@@ -12,31 +12,10 @@ from hydrotwin.communication.events import (
 )
 from hydrotwin.db.crud.cultura import obter_parametros_cultura
 from hydrotwin.helpers.logger import logger
+from hydrotwin.communication.parser import formatar_mensagem_parametros
 
 # ================= CONFIGURAÇÃO =================
 CONFIRM_TIMEOUT = 10  # Tempo limite para resposta do hardware (segundos)
-
-# ================= FORMATO DE MENSAGEM =================
-def formatar_mensagem_parametros(bancada_id: int, cultura_id: int, parametros: dict) -> str | None:
-    """
-    Formata mensagem para enviar parâmetros ao Arduino.
-    Formato: PARAMS,bancada_id=X,cultura_id=Y,ph_min=...,ph_max=...,ec_min=...,ec_max=...,dias_ciclo=...
-    """
-    if not parametros:
-        return None
-
-    msg_parts = [
-        "PARAMS",
-        f"bancada_id={bancada_id}",
-        f"cultura_id={cultura_id}",
-        f"ph_min={parametros.get('ph_min', '')}",
-        f"ph_max={parametros.get('ph_max', '')}",
-        f"ec_min={parametros.get('ec_min', '')}",
-        f"ec_max={parametros.get('ec_max', '')}",
-        f"dias_ciclo={parametros.get('dias_ciclo', '')}",
-    ]
-
-    return ",".join(msg_parts) + "\n"
 
 
 # ================= WORKER DE ENVIO =================

@@ -15,6 +15,7 @@ from hydrotwin.communication.events import (
 )
 from hydrotwin.db import conectar_db
 from hydrotwin.db.crud.sensor import processar_sensor as processar_sensor_db, inserir_leitura_sensor
+from hydrotwin.communication.parser import parse_linha, parsear_confirmacao_arduino
 
 # ================= ESTADO GLOBAL =================
 INTERVALO_PROCESSAMENTO_S = 30  # Em segundos; tempo aumenta para 3600 (1 hora) no sistema real
@@ -113,64 +114,6 @@ def loop_processamento_periodico():
                     bancadas_ativas.add(bancada_id)
 
     logger.info("Loop de processamento periódico encerrado.")
-
-
-# ================= PARSERS =================
-def parse_linha(linha: str):
-    try:
-        partes = linha.strip().split(",")
-
-        bancada_str = partes[0]  # Ex: "B1" ou "b1"
-        ph = float(partes[1])
-        ec = float(partes[2])
-        temperatura_ambiente = float(partes[3])
-        temperatura_agua = float(partes[4])
-        luminosidade = float(partes[5])
-        nivel_tanque = float(partes[6])
-        umidade = float(partes[7])
-
-        dth_recebido = datetime.now().isoformat()
-        bancada_id = int(bancada_str.upper().replace("B", ""))
-
-        return (
-            bancada_id, ph, ec,
-            temperatura_ambiente, temperatura_agua,
-            luminosidade,
-            nivel_tanque, umidade,
-            dth_recebido
-        )
-
-    except (ValueError, IndexError) as e:
-        logger.warning(f"Falha ao parsear linha de telemetria ('{linha}'): {e}")
-        return None
-
-
-def parsear_confirmacao_arduino(linha: str):
-    try:
-        partes = linha.strip().split(",")
-        resposta_tipo = partes[0]
-
-        if resposta_tipo not in ("PARAMS_OK", "PARAMS_ERROR"):
-            return None
-
-        campos = {}
-        for parte in partes[1:]:
-            if "=" in parte:
-                chave, valor = parte.split("=", 1)
-                campos[chave.strip()] = valor.strip()
-
-        bancada_id = int(campos.get("bancada_id", -1))
-
-        if resposta_tipo == "PARAMS_OK":
-            return {"status": "ok", "bancada_id": bancada_id, "motivo": None}
-        else:
-            motivo = campos.get("motivo", "Erro desconhecido")
-            return {"status": "erro", "bancada_id": bancada_id, "motivo": motivo}
-
-    except Exception as e:
-        logger.error(f"Erro ao parsear confirmação: {e}")
-        return None
-
 
 # ================= TRANSPORT READER =================
 def transport_reader(transport):

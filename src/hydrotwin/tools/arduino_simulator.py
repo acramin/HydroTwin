@@ -159,7 +159,7 @@ def processar_comando(sock: socket.socket, linha: str, behavior: str):
         print(f"✅ [COMANDOS] Respondido: {resposta.strip()}")
 
     elif behavior == "erro":
-        resposta = f"PARAMS_ERROR,bancada_id={bancada_id},motivo=Sensores fora do limite de calibracao\n"
+        resposta = f"PARAMS_ERROR,bancada_id={bancada_id},motivo=Sensores fora do limite de calibração\n"
         safe_send(sock, resposta)
         print(f"⚠️ [COMANDOS] Respondido Erro: {resposta.strip()}")
 

@@ -1,6 +1,6 @@
 import sys
 
-from hydrotwin.helpers.env import get_env_mode, is_production_mode, is_development_mode
+from hydrotwin.helpers.env import is_production_mode, is_development_mode
 from hydrotwin.helpers.logger import logger
 from hydrotwin.db.conn import DB_PATH
 from hydrotwin.db.crud.base import drop_tables, create_tables
@@ -8,7 +8,6 @@ from hydrotwin.db.crud.cultura import insert_culturas
 from hydrotwin.db.crud.usuario import ensure_default_admin
 
 if __name__ == "__main__":
-    env_mode = get_env_mode()
 
     if is_production_mode() and DB_PATH.exists():
         logger.warning("Modo de produção detectado. O banco de dados não será reinicializado para evitar perda de dados.")

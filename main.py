@@ -57,6 +57,11 @@ monitoramento_detalhado = st.Page(
     title="Monitoramento | Detalhado"
 )
 
+simulador = st.Page(
+    "app/pages/6_🕹️_Simulador.py", 
+    title="Simulador"
+)
+
 # Obter usuário atual
 usuario = get_current_user()
 
@@ -78,6 +83,8 @@ else:
         pages.append(visao_geral)
     if "Monitoramento Detalhado" in allowed_pages:
         pages.append(monitoramento_detalhado)
+    if "Simulador" in allowed_pages:
+        pages.append(simulador)
 
 # Renderizar user badge na sidebar
 if usuario is not None:

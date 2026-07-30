@@ -2,6 +2,7 @@ import streamlit as st
 
 from hydrotwin.db.crud.usuario import autenticar_usuario, ensure_default_admin
 from hydrotwin.helpers.env import is_development_mode, user_session_key, get_admin_credentials
+from hydrotwin.helpers.logger import logger
 
 SESSION_USER_KEY = user_session_key()
 

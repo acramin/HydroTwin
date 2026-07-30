@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from hydrotwin.db.conn import conectar_db
+from hydrotwin.helpers.logger import logger
 
 def inserir_filete(bancada_id, cultura_id, data_inicio):
     """Insere um novo filete com cultura específica"""

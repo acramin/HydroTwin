@@ -4,6 +4,7 @@ import secrets
 import hmac
 
 from hydrotwin.db.conn import conectar_db
+from hydrotwin.helpers.logger import logger
 
 ### Auxiliares ###
 def _hash_password(password, salt=None):

@@ -1,4 +1,5 @@
 from hydrotwin.db.conn import conectar_db
+from hydrotwin.helpers.logger import logger
 
 # Cria todas tabelas e indexes
 def create_tables():

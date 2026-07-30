@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from hydrotwin.helpers.env import get_db_name
+from hydrotwin.helpers.logger import logger
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / get_db_name()

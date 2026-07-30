@@ -1,4 +1,5 @@
 from math import isnan
+from hydrotwin.helpers.logger import logger
 
 # utils para normalização e conversão de dados
 def to_float(valor):

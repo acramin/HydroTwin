@@ -1,4 +1,5 @@
 from hydrotwin.db.conn import conectar_db
+from hydrotwin.helpers.logger import logger
 
 def drop_tables():
     conn = conectar_db()

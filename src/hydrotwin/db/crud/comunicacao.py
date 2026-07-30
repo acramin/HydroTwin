@@ -1,4 +1,5 @@
 from datetime import datetime
+from hydrotwin.helpers.logger import logger
 
 def obter_status_comunicacao(conn):
 

@@ -2,6 +2,7 @@ import pandas as pd
 
 from hydrotwin.db.conn import conectar_db
 from hydrotwin.processing import analisar_tendencias, detectar_anomalias, avaliar_estado_operacional
+from hydrotwin.helpers.logger import logger
 
 ### Variáveis Globais
 

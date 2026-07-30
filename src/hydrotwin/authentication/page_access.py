@@ -3,7 +3,7 @@
 
 # hydrotwin/permissions.py (ou onde fica a função get_allowed_pages)
 
-from hydrotwin import is_development_mode
+from hydrotwin import is_development_mode, logger
 
 PAGE_ENV_REQUIREMENTS = {
     "Simulador": ["development"], # 🔒 Apenas em ambiente de desenvolvimento

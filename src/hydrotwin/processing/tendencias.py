@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pandas as pd
 
+from hydrotwin.helpers.logger import logger
+
 # =========================================================
 # CONFIGURAÇÕES
 # =========================================================

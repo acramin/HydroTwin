@@ -11,13 +11,16 @@ PORT = 65432
 INTERVALO_GERACAO_S = 2
 
 # BANCADAS SIMULADAS
-BANCADAS_IDS = [1, 2, 3]
+BANCADAS_IDS = [1, 2]
 
-# ================= ESTADO SIMULADO DA FÍSICA =================
+# ================= ESTADO SIMULADO DA FÍSICA E CONTROLE =================
 estado_bancadas = {}
 estado_lock = threading.Lock()
 socket_send_lock = threading.Lock()
 stop_event = threading.Event()
+
+# Evento para aguardar a recepção dos parâmetros antes de disparar telemetria
+params_recebidos_event = threading.Event()
 
 
 def _inicializar_estado():
@@ -58,7 +61,7 @@ def _atualizar_estado(estado):
 
 def gerar_linha_telemetria(bancada_id: int) -> str:
     """Gera linha exatamente no formato esperado pelo Reader:
-    B{id},{ph},{ec},{temp_ambiente},{temp_agua},{luminosidade},{nivel_tanque},{umidade}\n
+    B{id}:ARDUINO,{ph},{ec},{temp_ar},{temp_agua},{luminosidade},{nivel_tanque}\n
     """
     with estado_lock:
         if bancada_id not in estado_bancadas:
@@ -66,14 +69,14 @@ def gerar_linha_telemetria(bancada_id: int) -> str:
         st = _atualizar_estado(estado_bancadas[bancada_id])
 
     return (
-        f"B{bancada_id},"
+        f"B{bancada_id}:ARDUINO,"
         f"{st['ph']:.2f},"
         f"{st['ec']:.2f},"
         f"{st['temp_ar']:.2f},"
+        f"{st['umidade']:.2f},"
         f"{st['temp_agua']:.2f},"
         f"{st['luz']:.2f},"
-        f"{st['nivel']:.2f},"
-        f"{st['umidade']:.2f}\n"
+        f"{st['nivel']:.2f}\n"
     )
 
 
@@ -90,7 +93,18 @@ def safe_send(sock: socket.socket, mensagem: str):
 
 # ================= WORKER 1: ENVIO DE TELEMETRIA =================
 def worker_telemetria(sock: socket.socket):
-    print("📡 [TELEMETRIA] Worker de envio iniciado.")
+    print("⏳ [TELEMETRIA] Aguardando cadastro de bancadas (recebimento do PARAMS)...")
+    
+    # Aguarda o evento ser disparado pelo worker de comandos (ou encerramento)
+    while not stop_event.is_set():
+        if params_recebidos_event.wait(timeout=1.0):
+            break
+
+    if stop_event.is_set():
+        return
+
+    print("🚀 [TELEMETRIA] Cadastro/PARAMS recebido! Iniciando envio continuo de telemetria...")
+    
     while not stop_event.is_set():
         for b_id in BANCADAS_IDS:
             if stop_event.is_set():
@@ -181,6 +195,9 @@ def processar_comando(sock: socket.socket, linha: str, behavior: str):
         sock.close()
         stop_event.set()
 
+    # Sinaliza que os parâmetros/cadastro foram recebidos, desbloqueando a telemetria
+    params_recebidos_event.set()
+
 
 # ================= MAIN & CLI =================
 def main():
@@ -221,6 +238,11 @@ def main():
         print("❌ Não foi possível conectar ao Manager. Suba o manager.py primeiro!")
         sys.exit(1)
 
+    # Handshake Inicial: Notifica a entrada do no no sistema
+    msg_init = "INIT_NODE,ARDUINO\n"
+    safe_send(sock, msg_init)
+    print(f"📌 [HANDSHAKE] Enviado comando de inicialização: {msg_init.strip()}")
+
     threads = []
 
     # Inicia threads com base no modo escolhido
@@ -234,6 +256,10 @@ def main():
         threads.append(t_cmd)
 
     if args.mode in ["full", "send"]:
+        # No modo apenas send (sem escuta de comandos), liberamos o envio diretamente
+        if args.mode == "send":
+            params_recebidos_event.set()
+
         t_tele = threading.Thread(
             target=worker_telemetria, 
             args=(sock,), 

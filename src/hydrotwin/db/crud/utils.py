@@ -3,19 +3,23 @@ DEFAULT_LIMITES = {
     "ec": (0.8, 1.8),
     "temperatura_ambiente": (18.0, 26.0),
     "temperatura_agua": (10.0, 30.0),
-    "luminosidade": (12000, 17000),
+    "lux": (12000, 17000),
     "nivel_tanque": (0, 1),
     "umidade": (45.0, 75.0),
 }
+from hydrotwin.helpers.logger import logger
 
 def _valor_limite_cultura(cultura, metrica, tipo):
-    chave = f"{metrica}_{tipo}"
-    if chave in cultura:
-        return cultura.get(chave)
-    return None
+    if metrica == "luminosidade":
+        chave = f"lux_{tipo}"
+    else:
+        chave = f"{metrica}_{tipo}"
+        if chave in cultura:
+            #logger.debug(f"chave {chave}: {cultura.get(chave)}")
+            return cultura.get(chave)
+        return None
 
 def resolver_limites(cultura, metrica):
-    from hydrotwin.helpers.logger import logger
     
     #logger.debug(f"Resolver limites: cultura={cultura}; metrica={metrica}")
     # usa no sensor e na bancada

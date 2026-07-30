@@ -27,7 +27,7 @@ st.set_page_config(
 ENV_ATUAL = "Development" if is_development_mode else "Production"
 usuario = get_current_user()
 
-if not is_development_mode:
+if not is_development_mode():
     st.error("🔒 **Acesso Restrito:** Esta página só está disponível em ambiente de **desenvolvimento**.")
     st.info(f"Ambiente detectado: `{ENV_ATUAL}`")
     st.stop()

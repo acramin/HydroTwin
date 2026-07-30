@@ -89,12 +89,16 @@ def setup_logger():
     if logger.hasHandlers():
         return logger
 
+    # 0. CRIA A PASTA DE LOGS SE NÃO EXISTIR
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    log_file_path = os.path.join(log_dir, "app.log")
+
     # Filtro anti-duplicados
     duplicate_filter = DuplicateFilter(interval_seconds=60)
     logger.addFilter(duplicate_filter)
 
-    # Novo formato: inclui [arquivo.py:linha] e a função (opcional)
-    # Exemplo de saída: 2026-07-28 17:00:00,123 - hydrotwin - [services.py:42] - INFO - Mensagem aqui
+    # Formato do log
     log_format = "%(asctime)s - %(name)s - [%(filename)s:%(lineno)d] - %(levelname)s - %(message)s"
     formatter = logging.Formatter(log_format)
 
@@ -104,9 +108,9 @@ def setup_logger():
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
-    # 2. ARQUIVO DIÁRIO
+    # 2. ARQUIVO DIÁRIO (Salvo na pasta 'logs/')
     file_handler = TimedRotatingFileHandler(
-        "app.log",
+        log_file_path,
         when="midnight",
         interval=1,
         backupCount=30,
@@ -122,14 +126,17 @@ def setup_logger():
     smtp_port = os.getenv("SMTP_PORT")
     smtp_user = os.getenv("SMTP_USER")
     smtp_pass = os.getenv("SMTP_PASS")
-    smtp_to = os.getenv("SMTP_TO")
+    smtp_to_raw = os.getenv("SMTP_TO", "")
 
-    if all([smtp_host, smtp_port, smtp_user, smtp_pass, smtp_to]):
+    # Separa por vírgula e remove espaços extras de cada e-mail
+    smtp_to_list = [email.strip() for email in smtp_to_raw.split(",") if email.strip()]
+
+    if all([smtp_host, smtp_port, smtp_user, smtp_pass]) and smtp_to_list:
         try:
             email_handler = SMTPHandler(
                 mailhost=(smtp_host, int(smtp_port)),
                 fromaddr=smtp_user,
-                toaddrs=[smtp_to],
+                toaddrs=smtp_to_list,  # Passa a lista com os e-mails
                 subject="[ALERTA CRÍTICO] Falha no Sistema",
                 credentials=(smtp_user, smtp_pass),
                 secure=(),
@@ -141,7 +148,7 @@ def setup_logger():
             logger.warning(f"Não foi possível configurar o SMTPHandler: {e}")
     else:
         logger.warning(
-            "Variáveis de ambiente SMTP incompletas. Envio de e-mails desativado."
+            "Variáveis de ambiente SMTP incompletas ou lista de e-mails vazia."
         )
 
     setup_global_exception_handlers()

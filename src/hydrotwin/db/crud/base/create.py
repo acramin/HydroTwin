@@ -3,6 +3,7 @@ from hydrotwin.helpers.logger import logger
 
 # Cria todas tabelas e indexes
 def create_tables():
+    logger.debug("create_tables()")
     conn = conectar_db()
     cursor = conn.cursor()
     

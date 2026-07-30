@@ -5,6 +5,7 @@ from hydrotwin.helpers.logger import logger
 
 def inserir_filete(bancada_id, cultura_id, data_inicio):
     """Insere um novo filete com cultura específica"""
+    logger.debug("inserir_filete(bancada_id, cultura_id, data_inicio)")
     conn = conectar_db()
     cursor = conn.cursor()
     
@@ -31,6 +32,7 @@ def inserir_filete(bancada_id, cultura_id, data_inicio):
 
 def update_filete_colhido(filete_id, flag_colhido):
     """Atualiza o status de colhido de um filete"""
+    logger.debug("update_filete_colhido(filete_id, flag_colhido)")
     conn = conectar_db()
     cursor = conn.cursor()
     
@@ -45,6 +47,7 @@ def update_filete_colhido(filete_id, flag_colhido):
     
 def get_filetes_by_bancada(bancada_id):
     """Retorna todos os filetes de uma bancada com suas informações de cultura"""
+    logger.debug("get_filetes_by_bancada(bancada_id)")
     conn = conectar_db()
     cursor = conn.cursor()
     

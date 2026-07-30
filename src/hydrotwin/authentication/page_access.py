@@ -30,6 +30,7 @@ PAGE_ACCESS_CONFIG = {
 
 def get_allowed_pages(role: str) -> list[str]:
     """Retorna as páginas permitidas para a role E para o ambiente atual."""
+    logger.debug("get_allowed_pages(role: str) -> list[str]")
     config = PAGE_ACCESS_CONFIG.get(role, {})
     todas_paginas_role = config.get("pages", [])
 
@@ -48,5 +49,6 @@ def get_allowed_pages(role: str) -> list[str]:
 
 def has_page_access(role: str, page_name: str) -> bool:
     """Verifica se uma role tem acesso a uma página específica"""
+    logger.debug("has_page_access(role: str, page_name: str) -> bool")
     allowed_pages = get_allowed_pages(role)
     return page_name in allowed_pages

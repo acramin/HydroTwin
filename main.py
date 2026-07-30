@@ -12,6 +12,8 @@ from hydrotwin import (
 )
 import streamlit as st
 
+logger.debug("main.py")
+
 # --- TRATAMENTO ASYNCIO ---
 try:
     loop = asyncio.get_running_loop()

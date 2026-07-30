@@ -20,6 +20,8 @@ from hydrotwin import (
     logger
 )
 
+logger.debug("2_🌿_Painel_de_Controle_-_Bancadas.py")
+
 from app.components.painel_controle import (
     renderizar_bancada
 )

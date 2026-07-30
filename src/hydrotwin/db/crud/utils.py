@@ -10,6 +10,7 @@ DEFAULT_LIMITES = {
 from hydrotwin.helpers.logger import logger
 
 def _valor_limite_cultura(cultura, metrica, tipo):
+    logger.debug("_valor_limite_cultura(cultura, metrica, tipo)")
     if metrica == "luminosidade":
         chave = f"lux_{tipo}"
     else:
@@ -20,7 +21,7 @@ def _valor_limite_cultura(cultura, metrica, tipo):
         return None
 
 def resolver_limites(cultura, metrica):
-    
+    logger.debug("resolver_limites(cultura, metrica)")
     #logger.debug(f"Resolver limites: cultura={cultura}; metrica={metrica}")
     # usa no sensor e na bancada
     limite_min = _valor_limite_cultura(cultura, metrica, "min")

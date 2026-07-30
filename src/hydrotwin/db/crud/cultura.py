@@ -2,6 +2,7 @@ from hydrotwin.db.conn import conectar_db
 from hydrotwin.helpers.logger import logger
 
 def insert_culturas():
+    logger.debug("insert_culturas()")
     conn = conectar_db()
     cursor = conn.cursor()
 
@@ -51,6 +52,7 @@ def get_culturas():
 def valor_cultura(cursor, bancada_id):
     # usado no get_limites_bancada e no processador
     """Retorna os parâmetros da cultura do filete mais recente da bancada"""
+    logger.debug("valor_cultura(cursor, bancada_id)")
     cursor.execute(
         """
         SELECT c.id, c.nome, c.ph_min, c.ph_max, c.ec_min, c.ec_max, c.dias_ciclo, tempo_luz_acesa, lux_min, lux_max
@@ -84,6 +86,7 @@ def valor_cultura(cursor, bancada_id):
 ## esse é pela cultura mesmo - usado no sender  
 def obter_parametros_cultura(cultura_id: int) -> dict | None:
     """Retorna os parâmetros ideais de uma cultura a partir do banco de dados."""
+    logger.debug("obter_parametros_cultura(cultura_id: int) -> dict | None")
     conn = conectar_db()
     if not conn:
         logger.error("Não foi possível conectar ao banco de dados para buscar parâmetros.")

@@ -15,6 +15,8 @@ from hydrotwin import (
     logger
 )
 
+logger.debug("6_🕹️_Simulador.py")
+
 # Configuração da página
 st.set_page_config(
     page_title="HydroTwin - Painel de Simulação",

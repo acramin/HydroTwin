@@ -31,6 +31,7 @@ STATUS_SCORE = {
 # =========================================================
 
 def _calcular_variacao(media_antiga, media_recente):
+    logger.debug("_calcular_variacao(media_antiga, media_recente)")
     if media_antiga is None or abs(media_antiga) < 1e-6:
         return 0.0
 
@@ -38,6 +39,7 @@ def _calcular_variacao(media_antiga, media_recente):
 
 
 def _classificar_tendencia(variacao):
+    logger.debug("_classificar_tendencia(variacao)")
     variacao_abs = abs(variacao)
 
     # praticamente parado
@@ -56,6 +58,7 @@ def _classificar_tendencia(variacao):
 
 
 def _gerar_mensagem(nome, tendencia, variacao_percentual, unidade):
+    logger.debug("_gerar_mensagem(nome, tendencia, variacao_percentual, unidade)")
     sufixo = f" {unidade}" if unidade else ""
 
     if tendencia == "Estável":
@@ -86,6 +89,7 @@ def analisar_tendencias(df, janela=JANELA_ANALISE):
     Analisa tendência simples comparando:
     média antiga vs média recente.
     """
+    logger.debug("analisar_tendencias(df, janela=JANELA_ANALISE)")
     from hydrotwin.processing.default import METRICAS_CONFIG
     if df is None or df.empty:
         return {

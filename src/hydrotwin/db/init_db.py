@@ -8,6 +8,7 @@ from hydrotwin.db.crud.cultura import insert_culturas
 from hydrotwin.db.crud.usuario import ensure_default_admin
 
 if __name__ == "__main__":
+    logger.debug("__main__")
     try:
         if is_production_mode() and DB_PATH.exists():
             logger.warning("Modo de produção detectado. O banco de dados não será reinicializado para evitar perda de dados.")

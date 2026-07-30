@@ -14,6 +14,7 @@ from hydrotwin import (
 )
 
 def renderizar_bancada(bancada):
+    logger.debug("renderizar_bancada(bancada)")
     (
         bancada_id,
         nome_bancada,

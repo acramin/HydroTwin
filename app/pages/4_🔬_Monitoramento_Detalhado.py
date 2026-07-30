@@ -9,6 +9,8 @@ from hydrotwin import (
     logger
 )
 
+logger.debug("4_🔬_Monitoramento_Detalhado.py")
+
 from app.components.monitoramento_detalhado import (
     carregar_monitoramento_bancada,
     montar_df_anomalias,

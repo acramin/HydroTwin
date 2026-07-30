@@ -32,6 +32,7 @@ STATUS_SCORE = {
 # =========================================================
 
 def _calcular_desvio_percentual(valor_atual, media):
+    logger.debug("_calcular_desvio_percentual(valor_atual, media)")
     if media is None or abs(media) < 1e-6:
         return 0.0
 
@@ -39,6 +40,7 @@ def _calcular_desvio_percentual(valor_atual, media):
 
 
 def _classificar_desvio(desvio):
+    logger.debug("_classificar_desvio(desvio)")
     if desvio <= LIMIARES["Saudável"]:
         return "Saudável"
 
@@ -49,6 +51,7 @@ def _classificar_desvio(desvio):
 
 
 def _gerar_mensagem(nome, valor, media, desvio_percentual, unidade, status):
+    logger.debug("_gerar_mensagem(nome, valor, media, desvio_percentual, unidade, status)")
     sufixo = f" {unidade}" if unidade else ""
 
     return (
@@ -69,6 +72,7 @@ def detectar_anomalias(df, janela=JANELA_ANALISE):
     Detecta mudanças bruscas comparando
     o valor atual com a média recente.
     """
+    logger.debug("detectar_anomalias(df, janela=JANELA_ANALISE)")
 
     from hydrotwin.processing.default import METRICAS_CONFIG
 

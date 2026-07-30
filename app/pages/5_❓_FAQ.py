@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import streamlit as st
 
+from hydrotwin import logger
+
+logger.debug("5_❓_FAQ.py")
+
 # Configuração da Página
 st.set_page_config(page_title="Central de Ajuda - HydroTwin", layout="wide", page_icon="❓")
 

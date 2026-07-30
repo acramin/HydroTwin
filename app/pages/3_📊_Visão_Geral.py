@@ -8,6 +8,8 @@ from hydrotwin import (
     logger
 )
 
+logger.debug("3_📊_Visão_Geral.py")
+
 from app.components.visao_geral import (
     get_last_status,
     get_kpis,

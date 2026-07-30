@@ -39,6 +39,7 @@ from hydrotwin.communication.events import stop_event, ready_event
 
 def encerrar_sistema(transport, threads):
     """Centraliza o desligamento gracioso dos recursos e threads."""
+    logger.debug("encerrar_sistema(transport, threads)")
     if stop_event.is_set() and not ready_event.is_set():
         # Evita execuções de encerramento redundantes
         pass
@@ -63,6 +64,7 @@ def encerrar_sistema(transport, threads):
 
 def conexao_worker(transport):
     """Worker dedicado exclusivamente a estabelecer e manter a conexão ativa."""
+    logger.debug("conexao_worker(transport)")
     tentativas = 0
     INTERVALO_RECONEXAO = 2  # segundos
 
@@ -102,6 +104,7 @@ def conexao_worker(transport):
 
 def worker_com_barreira(target_func, *args):
     """Aguardará a conexão ficar pronta e tratará quedas de conexão."""
+    logger.debug("worker_com_barreira(target_func, *args)")
     while not stop_event.is_set():
         # Aguarda a conexão ficar pronta (ready_event)
         if ready_event.wait(timeout=1.0):
@@ -114,6 +117,7 @@ def worker_com_barreira(target_func, *args):
 
 
 def main():
+    logger.debug("main()")
     transport_mode = get_transport_mode()
     
     if transport_mode == 'serial':

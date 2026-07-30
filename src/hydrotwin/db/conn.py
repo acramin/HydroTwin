@@ -10,6 +10,7 @@ def conectar_db():
     """
     Função centralizadora para abrir conexão com banco de dados
     """
+    logger.debug("conectar_db()")
     #print(DB_PATH)
     # Garante que a pasta 'dados/' exista
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)

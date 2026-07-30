@@ -10,6 +10,8 @@ from hydrotwin import (
     logger
 )
 
+logger.debug("1_👋_HydroTwin.py")
+
 # Configuração da página
 st.set_page_config(
     page_title="HydroTwin - Monitoramento Hidropônico",

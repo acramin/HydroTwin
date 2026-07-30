@@ -13,6 +13,7 @@ from hydrotwin import (
 
 def get_last_status() -> dict[str, dict[str, Any]]:
     """Retorna o status atual e a data de atualização aninhados por bancada."""
+    logger.debug("get_last_status() -> dict[str, dict[str, Any]]")
     status_bancadas = {}
     bancadas = get_bancadas() or []
 
@@ -39,6 +40,7 @@ def get_last_status() -> dict[str, dict[str, Any]]:
 
 def get_kpis(bancada_id: int | str) -> dict[str, Any]:
     """Retorna o dicionário de KPIs recentes para uma bancada específica."""
+    logger.debug("get_kpis(bancada_id: int | str) -> dict[str, Any]")
     df = get_raw_recent(bancada_id)
     
     if df is None:
@@ -67,6 +69,7 @@ def get_kpis(bancada_id: int | str) -> dict[str, Any]:
 
 def get_alertas() -> list[dict[str, Any]]:
     """Retorna alertas ativos estruturados para facilitar renderização no frontend."""
+    logger.debug("get_alertas() -> list[dict[str, Any]]")
     alertas = []
     bancadas = get_bancadas() or []
 

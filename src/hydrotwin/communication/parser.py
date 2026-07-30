@@ -4,6 +4,7 @@ from datetime import datetime
 
 # ================= PARSERS READER =================
 def parse_linha(linha: str):
+    logger.debug("parse_linha(linha: str)")
     try:
         partes = linha.strip().split(",")
 
@@ -38,6 +39,7 @@ def parse_linha(linha: str):
 
 
 def parsear_confirmacao_arduino(linha: str):
+    logger.debug("parsear_confirmacao_arduino(linha: str)")
     try:
         partes = linha.strip().split(",")
         resposta_tipo = partes[0]
@@ -64,6 +66,7 @@ def parsear_confirmacao_arduino(linha: str):
         return None
 
 def parser_arduino_id(linha : str):
+    logger.debug("parser_arduino_id(linha : str)")
     from hydrotwin.db.crud.controlador import criar_controlador
     try:
         partes = linha.strip().split(",")
@@ -84,6 +87,7 @@ def formatar_mensagem_parametros(bancada_id: int, cultura_id: int, parametros: d
     Formata mensagem para enviar parâmetros ao Arduino.
     Formato: PARAMS,bancada_id=X,cultura_id=Y,ph_min=...,ph_max=...,ec_min=...,ec_max=...,dias_ciclo=...
     """
+    logger.debug("formatar_mensagem_parametros(bancada_id: int, cultura_id: int, parametros: dict) -> str | None")
     if not parametros:
         return None
 

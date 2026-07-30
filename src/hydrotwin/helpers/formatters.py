@@ -19,6 +19,7 @@ def to_float(valor):
 ## utils de formatação de data e hora
 from datetime import datetime, timedelta
 def formatar_data(dth):
+    logger.debug("formatar_data(dth)")
     if not isinstance(dth, datetime):
         dth = datetime.strptime(dth, "%Y-%m-%d %H:%M:%S")
     if not dth:
@@ -26,6 +27,7 @@ def formatar_data(dth):
     return dth.strftime("%d/%m/%Y %H:%M:%S")
 
 def formatar_data_filete(dth):
+    logger.debug("formatar_data_filete(dth)")
     if not isinstance(dth, datetime):
         dth = datetime.strptime(dth, "%Y-%m-%d")
     if not dth:

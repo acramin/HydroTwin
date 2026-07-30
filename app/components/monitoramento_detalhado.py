@@ -52,6 +52,7 @@ def carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> di
     
     Utiliza cache de 60 segundos para otimizar re-execuções no Streamlit.
     """
+    logger.debug("carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> dict[str, Any]")
     df = get_raw_recent(bancada_id=bancada_id, horas=horas)
     proc = get_sensor_proc_ultimo(bancada_id)
 
@@ -99,6 +100,7 @@ def carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> di
 # --- FUNÇÕES AUXILIARES DE DATAFRAME ---
 def _montar_df_generico(dados_dict: dict | None, chave: str, colunas: list[str]) -> pd.DataFrame:
     """Função genérica auxiliar para evitar duplicação de lógica entre previsões e anomalias."""
+    logger.debug("_montar_df_generico(dados_dict: dict | None, chave: str, colunas: list[str]) -> pd.DataFrame")
     itens = (dados_dict or {}).get(chave) or []
     if not itens:
         return pd.DataFrame(columns=colunas)
@@ -107,14 +109,17 @@ def _montar_df_generico(dados_dict: dict | None, chave: str, colunas: list[str])
 
 
 def montar_df_previsoes(resultado_previsao: dict | None) -> pd.DataFrame:
+    logger.debug("montar_df_previsoes(resultado_previsao: dict | None) -> pd.DataFrame")
     return _montar_df_generico(resultado_previsao, "previsoes", COLUNAS_PREVISAO)
 
 
 def montar_df_anomalias(resultado_anomalias: dict | None) -> pd.DataFrame:
+    logger.debug("montar_df_anomalias(resultado_anomalias: dict | None) -> pd.DataFrame")
     return _montar_df_generico(resultado_anomalias, "anomalias", COLUNAS_ANOMALIA)
 
 
 def _serie_temporal(df: pd.DataFrame, metrica: str) -> pd.DataFrame:
+    logger.debug("_serie_temporal(df: pd.DataFrame, metrica: str) -> pd.DataFrame")
     if metrica not in df.columns:
         return pd.DataFrame(columns=["dth_recebido", "valor"])
 
@@ -129,6 +134,7 @@ def _bandas_zona(
     limite_min: float | None,
     limite_max: float | None
 ) -> list[dict[str, Any]]:
+    logger.debug("_bandas_zona(y_min_plot: float, y_max_plot: float, limite_min: float | None, limite_max: float | None) -> list[dict[str, Any]]")
     bandas = []
 
     if limite_min is not None and limite_max is not None:
@@ -172,6 +178,7 @@ def _bandas_zona(
 
 # --- COMPONENTES VISUAIS ---
 def render_legenda_zonas() -> None:
+    logger.debug("render_legenda_zonas() -> None:")
     st.markdown(
         """
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 12px 0;">
@@ -198,6 +205,7 @@ def render_legenda_zonas() -> None:
 
 
 def render_grafico_linha(df: pd.DataFrame, metrica: str, titulo: str, unidade: str = "") -> None:
+    logger.debug("render_grafico_linha(df: pd.DataFrame, metrica: str, titulo: str, unidade: str = "") -> None")
     serie = _serie_temporal(df, metrica)
     st.subheader(titulo)
 
@@ -227,6 +235,7 @@ def render_grafico_zona(
     unidade: str = "",
     mostrar_limites: bool = False,
 ) -> None:
+    logger.debug("render_grafico_zona(df: pd.DataFrame,metrica: str,titulo: str,limites: dict | None,unidade: str = '',mostrar_limites: bool = False,) -> None")
     serie = _serie_temporal(df, metrica)
     if serie.empty:
         st.info(f"{titulo}: sem leituras válidas para exibir.")

@@ -7,6 +7,7 @@ from hydrotwin.helpers.logger import logger
 class TCPServerTransport(Transporte):
 
     def __init__(self, host="0.0.0.0", port=5000):
+        logger.debug("__init__(self, host='0.0.0.0', port=5000)")
         self.host = host
         self.port = port
         self.servidor = None
@@ -17,6 +18,7 @@ class TCPServerTransport(Transporte):
         self._read_lock = threading.Lock()
 
     def conectar(self):
+        logger.debug("conectar(self)")
         try:
             # Cria e configura o socket do servidor
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,6 +44,7 @@ class TCPServerTransport(Transporte):
             raise ConnectionError(f"Falha na conexão do Servidor TCP: {e}")
 
     def enviar(self, mensagem: str):
+        logger.debug("enviar(self, mensagem: str)")
         if not self.conn:
             raise RuntimeError("Nenhum cliente conectado")
 
@@ -52,6 +55,7 @@ class TCPServerTransport(Transporte):
             self.conn.sendall(mensagem.encode("utf-8"))
 
     def receber(self) -> str | None:
+        logger.debug("receber(self) -> str | None")
         if not self.conn:
             raise RuntimeError("Nenhum cliente conectado")
 
@@ -81,6 +85,7 @@ class TCPServerTransport(Transporte):
             return None
 
     def fechar(self):
+        logger.debug("fechar(self)")
         with self._write_lock, self._read_lock:
             if self.conn:
                 try:
@@ -98,6 +103,7 @@ class TCPServerTransport(Transporte):
 class TCPClientTransport(Transporte):
 
     def __init__(self, host="127.0.0.1", port=5000):
+        logger.debug("__init__(self, host='127.0.0.1', port=5000)")
         self.host = host
         self.port = port
         self.socket = None
@@ -107,6 +113,7 @@ class TCPClientTransport(Transporte):
         self._read_lock = threading.Lock()
 
     def conectar(self):
+        logger.debug("conectar(self)")
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(3.0)  # Timeout para tentar conectar
@@ -124,6 +131,7 @@ class TCPClientTransport(Transporte):
             raise ConnectionError(f"Falha ao conectar cliente TCP: {e}")
 
     def enviar(self, mensagem: str):
+        logger.debug("enviar(self, mensagem: str)")
         if not self.socket:
             raise RuntimeError("Cliente TCP desconectado")
 
@@ -134,6 +142,7 @@ class TCPClientTransport(Transporte):
             self.socket.sendall(mensagem.encode("utf-8"))
 
     def receber(self) -> str | None:
+        logger.debug("receber(self) -> str | None")
         if not self.socket:
             raise RuntimeError("Cliente TCP desconectado")
 
@@ -161,6 +170,7 @@ class TCPClientTransport(Transporte):
             return None
 
     def fechar(self):
+        logger.debug("fechar(self)")
         with self._write_lock, self._read_lock:
             if self.socket:
                 try:

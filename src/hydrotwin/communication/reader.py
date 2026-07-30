@@ -25,6 +25,7 @@ comunicacao_offline = False
 
 # ================= DB WRITER =================
 def db_writer():
+    logger.debug("db_writer()")
     conn = conectar_db()
 
     logger.info("DB Writer iniciado.")
@@ -83,6 +84,7 @@ def db_writer():
 
 # ================= PROCESSAMENTO =================
 def loop_processamento_periodico():
+    logger.debug("loop_processamento_periodico()")
     logger.info("Loop de processamento periódico iniciado.")
 
     while not stop_event.is_set():
@@ -118,6 +120,7 @@ def loop_processamento_periodico():
 # ================= TRANSPORT READER =================
 def transport_reader(transport):
     global ultimo_recebimento
+    logger.debug("transport_reader(transport)")
     logger.info("Transport Reader iniciado.")
 
     while not stop_event.is_set():
@@ -180,6 +183,7 @@ def transport_reader(transport):
 # ================= MONITOR =================
 def monitor_comunicacao():
     global comunicacao_offline
+    logger.debug("monitor_comunicacao()")
     logger.info("Monitor de comunicação iniciado.")
 
     while not stop_event.is_set():

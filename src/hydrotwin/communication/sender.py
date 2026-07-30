@@ -21,6 +21,7 @@ CONFIRM_TIMEOUT = 10  # Tempo limite para resposta do hardware (segundos)
 # ================= WORKER DE ENVIO =================
 def atualizar_status(bancada_id: int, status: str, mensagem: str):
     """Atualiza o dicionário global de status de envio de forma thread-safe."""
+    logger.debug("atualizar_status(bancada_id: int, status: str, mensagem: str)")
     with status_envios_lock:
         status_envios[bancada_id] = {
             "status": status,
@@ -31,6 +32,7 @@ def atualizar_status(bancada_id: int, status: str, mensagem: str):
 
 def enviar_parametros_ideais_worker(transport):
     """Worker que processa a fila de envios e aguarda confirmação do Arduino."""
+    logger.debug("enviar_parametros_ideais_worker(transport)")
     logger.info("Worker de envio de parâmetros iniciado.")
 
     # Cache local para guardar confirmações recebidas fora de ordem

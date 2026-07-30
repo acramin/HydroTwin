@@ -39,6 +39,7 @@ STATUS_SCORE = {
 # =========================================================
 
 def _avaliar_faixa(valor, faixa_ideal, faixa_atencao):
+    logger.debug("_avaliar_faixa(valor, faixa_ideal, faixa_atencao)")
     ideal_min, ideal_max = faixa_ideal
     atencao_min, atencao_max = faixa_atencao
 
@@ -55,6 +56,7 @@ def _avaliar_faixa(valor, faixa_ideal, faixa_atencao):
 
 
 def _mensagem_sensor(nome, valor, unidade, status):
+    logger.debug("_mensagem_sensor(nome, valor, unidade, status)")
     sufixo = f" {unidade}" if unidade else ""
 
     if status == "Saudável":
@@ -76,6 +78,7 @@ def _construir_config_limites(limites_db: dict):
 
     A faixa de atenção é derivada expandindo a faixa ideal em 20% por padrão.
     """
+    logger.debug("_construir_config_limites(limites_db: dict)")
     from hydrotwin.processing.default import METRICAS_CONFIG
     config = {}
     for metrica, (lim_min, lim_max) in (limites_db or {}).items():
@@ -111,6 +114,7 @@ def avaliar_estado_operacional(dados, limites: dict | None = None):
     Avalia o estado operacional atual do sistema
     com base nas faixas ideais dos sensores críticos.
     """
+    logger.debug("avaliar_estado_operacional(dados, limites: dict | None = None)")
     from hydrotwin.helpers import to_float
 
     if not dados:

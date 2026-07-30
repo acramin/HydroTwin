@@ -106,13 +106,13 @@ def _construir_config_limites(limites_db: dict):
 
     return config
 
-
 def avaliar_estado_operacional(dados, limites: dict | None = None):
     """
     Avalia o estado operacional atual do sistema
     com base nas faixas ideais dos sensores críticos.
     """
     from hydrotwin.helpers import to_float
+
     if not dados:
         return {
             "status": "Sem dados",
@@ -124,12 +124,12 @@ def avaliar_estado_operacional(dados, limites: dict | None = None):
 
     # Se foram fornecidos limites dinâmicos (vindo do DB), converte para o formato interno usado pela avaliação. 
     # Caso contrário, usa o conjunto hard-coded definido em `LIMITES_OPERACIONAIS`.
-    if limites is not None:
+    if limites:
         limites_config = _construir_config_limites(limites)
-        logger.info("Usando limites dinâmicos do banco para avaliação:", limites_config)
+        #logger.info(f"Usando limites dinâmicos do banco para avaliação: {limites_config!r}")
     else:
         limites_config = LIMITES_OPERACIONAIS
-        logger.info("Usando limites operacionais padrão para avaliação:", limites_config)
+        #logger.info(f"Usando limites operacionais padrão para avaliação: {limites_config!r}") 
 
     for sensor, config in limites_config.items():
         valor = to_float(dados.get(sensor))

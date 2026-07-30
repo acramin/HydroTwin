@@ -11,6 +11,7 @@ from hydrotwin import (
     get_limites_bancada,
     detectar_anomalias,
     analisar_tendencias,
+    logger
 )
 
 # --- CONSTANTES ---
@@ -36,6 +37,7 @@ COLUNAS_ANOMALIA = [
 VARIAVEIS_ZONA_FORTES = [
     ("ph", "pH", ""),
     ("ec", "EC", "mS/cm"),
+    ("luminosidade", "Luminosidade", "lux")
 ]
 
 COR_ZONA_SAUDAVEL = "#d1e7dd"
@@ -62,6 +64,9 @@ def carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> di
         df = df.dropna(subset=["dth_recebido"]).sort_values("dth_recebido")
 
     limites = get_limites_bancada(bancada_id)
+    #logger.debug(f"limites: {limites}")
+    limites['luminosidade'] = limites.pop('lux')
+    #logger.debug(f"limites atualizado: {limites}")
     resultado_tendencia = analisar_tendencias(df)
     
     # Tratamento defensivo no dicionário de tendências

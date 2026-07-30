@@ -101,10 +101,18 @@ def setup_logger():
     # Formato do log
     log_format = "%(asctime)s - %(name)s - [%(filename)s:%(lineno)d] - %(levelname)s - %(message)s"
     formatter = logging.Formatter(log_format)
+    
+    # Define o nível do terminal com base no ambiente
+    if os.getenv('ENV_MODE') == 'PRODUCTION':
+        print('prod = info')
+        console_level = logging.INFO # Em prod, esconde os DEBUGs
+    else:
+        print('dev = debug')
+        console_level = logging.DEBUG # Em dev, mostra tudo
 
     # 1. TERMINAL (Console)
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setLevel(console_level)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 

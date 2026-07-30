@@ -10,6 +10,7 @@ from hydrotwin import (
     inserir_filete,
     update_bancada_concluido,
     update_filete_colhido,
+    logger
 )
 
 def renderizar_bancada(bancada):

@@ -4,7 +4,8 @@ import streamlit as st
 
 from hydrotwin import (
     get_current_user,
-    get_bancadas
+    get_bancadas,
+    logger
 )
 
 from app.components.visao_geral import (

@@ -16,7 +16,8 @@ from hydrotwin import (
     require_page_access,
     obter_controladores_com_vagas,
     associar_bancada_ao_controlador,
-    get_controladores
+    get_controladores,
+    logger
 )
 
 from app.components.painel_controle import (

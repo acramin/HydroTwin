@@ -11,7 +11,8 @@ from hydrotwin import (
     get_bancadas,
     get_current_user,
     gerar_telemetria_tupla,
-    is_development_mode
+    is_development_mode,
+    logger
 )
 
 # Configuração da página

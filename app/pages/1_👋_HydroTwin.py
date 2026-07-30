@@ -7,6 +7,7 @@ from hydrotwin import (
     criar_usuario,
     get_current_user,
     set_current_user,
+    logger
 )
 
 # Configuração da página

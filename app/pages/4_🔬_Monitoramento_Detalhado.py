@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import streamlit as st
-import pandas as pd
 
 from hydrotwin import (
     get_bancadas,
     get_current_user,
     formatar_data,
+    logger
 )
 
 from app.components.monitoramento_detalhado import (

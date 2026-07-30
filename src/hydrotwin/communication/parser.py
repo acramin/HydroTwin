@@ -7,16 +7,21 @@ def parse_linha(linha: str):
     try:
         partes = linha.strip().split(",")
 
-        bancada_str = partes[0]  # Ex: "B1" ou "b1"
+        # Pega apenas o que vem antes dos dois pontos (ex: "B1:ARDUINO_01" -> "B1")
+        bancada_str = partes[0].split(":")[0]
+        
         ph = float(partes[1])
         ec = float(partes[2])
         temperatura_ambiente = float(partes[3])
-        temperatura_agua = float(partes[4])
-        luminosidade = float(partes[5])
-        nivel_tanque = float(partes[6])
-        umidade = float(partes[7])
+        umidade = float(partes[4])
+        temperatura_agua = float(partes[5])
+        luminosidade = float(partes[6])
+        nivel_tanque = float(partes[7])
+        
 
         dth_recebido = datetime.now().isoformat()
+        
+        # Converte "B1" ou "b1" para o inteiro 1
         bancada_id = int(bancada_str.upper().replace("B", ""))
 
         return (
@@ -58,6 +63,21 @@ def parsear_confirmacao_arduino(linha: str):
         logger.error(f"Erro ao parsear confirmação: {e}")
         return None
 
+def parser_arduino_id(linha : str):
+    from hydrotwin.db.crud.controlador import criar_controlador
+    try:
+        partes = linha.strip().split(",")
+        
+        nome_arduino = partes[1]
+        
+        arduino_id = criar_controlador(nome_arduino)
+        
+        return arduino_id
+        
+    except (ValueError, IndexError) as e:
+        logger.warning(f"Falha ao parsear linha de cadastro coontrolador ('{linha}'): {e}")
+        return None
+
 # ================= PARSERS SENDER =================
 def formatar_mensagem_parametros(bancada_id: int, cultura_id: int, parametros: dict) -> str | None:
     """
@@ -76,6 +96,9 @@ def formatar_mensagem_parametros(bancada_id: int, cultura_id: int, parametros: d
         f"ec_min={parametros.get('ec_min', '')}",
         f"ec_max={parametros.get('ec_max', '')}",
         f"dias_ciclo={parametros.get('dias_ciclo', '')}",
+        f"tempo_luz_acesa={parametros.get('tempo_luz_acesa', '')}",
+        f"lux_min={parametros.get('lux_min', '')}",
+        f"lux_max={parametros.get('lux_max', '')}",
     ]
 
     return ",".join(msg_parts) + "\n"

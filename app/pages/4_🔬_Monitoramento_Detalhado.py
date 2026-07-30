@@ -163,9 +163,9 @@ with col_nivel:
     if "nivel_tanque" in df.columns:
         nivel_atual = df["nivel_tanque"].iloc[-1] if not df.empty else None
         
-        if nivel_atual <= 50:
+        if nivel_atual == 0:
             st.metric("Status do Reservatório", "🟢 Normal", delta="100% Capacidade")
-        elif nivel_atual > 50:
+        elif nivel_atual == 1:
             st.metric("Status do Reservatório", "🔴 Crítico (Abaixo)", delta="- Reposição Necessária", delta_color="inverse")
         else:
             st.metric("Status do Reservatório", f"⚠️ Indefinido ({nivel_atual})")

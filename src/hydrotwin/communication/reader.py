@@ -15,7 +15,7 @@ from hydrotwin.communication.events import (
 )
 from hydrotwin.db import conectar_db
 from hydrotwin.db.crud.sensor import processar_sensor as processar_sensor_db, inserir_leitura_sensor
-from hydrotwin.communication.parser import parse_linha, parsear_confirmacao_arduino
+from hydrotwin.communication.parser import parse_linha, parsear_confirmacao_arduino, parser_arduino_id
 
 # ================= ESTADO GLOBAL =================
 INTERVALO_PROCESSAMENTO_S = 30  # Em segundos; tempo aumenta para 3600 (1 hora) no sistema real
@@ -121,13 +121,14 @@ def transport_reader(transport):
     logger.info("Transport Reader iniciado.")
 
     while not stop_event.is_set():
+        # Aguarda a conexão estar pronta antes de tentar ler
+        if not ready_event.wait(timeout=0.5):
+            continue
+        
         try:
             linha = transport.receber()
-            ready_event.set()
 
             if linha:
-                logger.debug(f"Recebido raw: {linha.strip()}")
-
                 confirmacao = parsear_confirmacao_arduino(linha)
                 
                 if confirmacao:
@@ -147,43 +148,28 @@ def transport_reader(transport):
                             fila_dados.put(dados_parseados, timeout=1)
                         except Full:
                             logger.warning("Fila de dados cheia!")
+
+                elif linha.startswith("INIT_NODE"):
+                    arduino_id = parser_arduino_id(linha)
+                    logger.info(f"Arduino cadastrado! id:{arduino_id}")
+                elif linha.startswith(("DEBUG", "---")):
+                    logger.debug(f"Arduino: {linha.strip()}")
+
                 else:
                     logger.warning(f"Linha ignorada (formato inválido): {linha.strip()}")
 
-            # CENTRALIZADO: Executa sempre no final de cada ciclo do loop
             time.sleep(0.1)
 
         except Exception as e:
-            logger.error(f"Erro no transporte (conexão perdida): {e}")
-
-            ready_event.clear()
+            # Em caso de queda de conexão: apenas avisa, fecha o transporte e invalida o evento
+            logger.warning(f"Conexão perdida durante a leitura: {e}")
+            ready_event.clear()        
             try:
                 transport.fechar()
             except Exception:
                 pass
 
-            reconectado = False
-            for tentativa in range(1, 6):
-                if stop_event.is_set():
-                    break
-
-                try:
-                    logger.info(f"Tentando reconectar transporte... ({tentativa}/5)")
-                    transport.conectar()
-                    reconectado = True
-                    logger.info("Transporte reconectado com sucesso.")
-                    ready_event.set()
-                    break
-                except Exception as e2:
-                    logger.error(f"Reconexão falhou: {e2}")
-                    time.sleep(2)
-
-            if not reconectado:
-                logger.critical("Não foi possível reconectar após 5 tentativas. Encerrando.")
-                stop_event.set()
-                break
-    time.sleep(0.1)        
-
+    # Limpeza ao encerrar a aplicação completamente
     try:
         transport.fechar()
     except Exception:

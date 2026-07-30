@@ -67,10 +67,13 @@ def get_limites_bancada(bancada_id):
     try:
         cursor = conn.cursor()
         cultura = valor_cultura(cursor, bancada_id)
+        
+        #logger.debug(f"Cultura: {cultura}")
 
         limites = {}
         for metrica in DEFAULT_LIMITES:
             limites[metrica] = resolver_limites(cultura, metrica)
+            #logger.debug(f"{metrica}:{limites[metrica]}")
 
         return limites
     finally:

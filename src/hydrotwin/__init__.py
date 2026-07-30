@@ -3,12 +3,14 @@ from .db import *
 from .communication import *
 from .processing import *
 from .authentication import *
+from .tools import *
 
 __all__ = [
     ### Helpers
     'logger',
     'formatar_data',
     'formatar_data_filete',
+    'is_development_mode',
     
     ### Processing
     'detectar_anomalias',
@@ -44,6 +46,13 @@ __all__ = [
     'get_limites_bancada',
     'get_sensor_proc_ultimo',
     'get_alertas_ativos',
-    'obter_status_comunicacao'
+    'obter_status_comunicacao',
+    'bancadas_preenchidas',
+    'contar_controladores',
+    'atualizar_bancadas_controlador',
+    'get_controladores',
+    
+    ### Tools
+    'gerar_telemetria_tupla'
 ]
 

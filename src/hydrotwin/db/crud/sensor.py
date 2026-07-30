@@ -2,6 +2,7 @@ import pandas as pd
 
 from hydrotwin.db.conn import conectar_db
 from hydrotwin.processing import analisar_tendencias, detectar_anomalias, avaliar_estado_operacional
+from hydrotwin.helpers.logger import logger
 
 ### Variáveis Globais
 
@@ -29,6 +30,7 @@ def _estatisticas_dataframe(df):
     Returns:
         _type_: _description_
     """
+    logger.debug("_estatisticas_dataframe(df)")
     metricas = [
         "ph",
         "ec",
@@ -53,6 +55,7 @@ def _estatisticas_dataframe(df):
     return estatisticas
 
 def _resumir_maior_contribuicao(detalhes):
+    logger.debug("_resumir_maior_contribuicao(detalhes)")
     if not detalhes:
         return None
 
@@ -61,6 +64,7 @@ def _resumir_maior_contribuicao(detalhes):
     return metrica, nome, risco
 
 def _explicacao_da_metrica(metrica, estatisticas, cultura):
+    logger.debug("_explicacao_da_metrica(metrica, estatisticas, cultura)")
     from .utils import resolver_limites
     media = estatisticas.get(f"{metrica}_mean")
     limite_min, limite_max = resolver_limites(cultura or {}, metrica)
@@ -102,6 +106,7 @@ def _explicacao_da_metrica(metrica, estatisticas, cultura):
     return f"{nome} apresentou comportamento de risco na ultima janela analisada."
 
 def _mensagem_alerta_risco(status, detalhes, estatisticas, cultura):
+    logger.debug("_mensagem_alerta_risco(status, detalhes, estatisticas, cultura)")
     principal = _resumir_maior_contribuicao(detalhes)
     if principal is None:
         return None, None
@@ -120,6 +125,7 @@ def _mensagem_alerta_risco(status, detalhes, estatisticas, cultura):
     return None, None
 
 def _sincronizar_alerta_risco(cursor, bancada_id, status, detalhes, estatisticas, cultura):
+    logger.debug("_sincronizar_alerta_risco(cursor, bancada_id, status, detalhes, estatisticas, cultura)")
     novo_tipo, nova_mensagem = _mensagem_alerta_risco(status, detalhes, estatisticas, cultura)
 
     cursor.execute(
@@ -189,6 +195,7 @@ def _sincronizar_alerta_risco(cursor, bancada_id, status, detalhes, estatisticas
     )
 
 def _score_para_status(score):
+    logger.debug("_score_para_status(score)")
     try:
         score_value = float(score)
     except (TypeError, ValueError):
@@ -207,6 +214,12 @@ def inserir_leitura_sensor(conn, dados: tuple) -> int:
     
     Retorna o bancada_id associado ao registro.
     """
+    logger.debug("inserir_leitura_sensor(conn, dados: tuple) -> int")
+    import sqlite3
+
+    if not isinstance(conn, sqlite3.Connection) :
+        conn = conectar_db()
+        
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -220,6 +233,7 @@ def inserir_leitura_sensor(conn, dados: tuple) -> int:
         cursor.close()
 
 def get_raw_recent(bancada_id=None, horas=24):
+    logger.debug("get_raw_recent(bancada_id=None, horas=24)")
     from datetime import datetime, timedelta
     ## usado no monitoramento detalhado e no processar
     
@@ -247,6 +261,7 @@ def get_raw_recent(bancada_id=None, horas=24):
     return _query_dataframe(query, params=params)
 
 def processar_sensor(bancada_id, janela_horaria="24h", horas=24):
+    logger.debug("processar_sensor(bancada_id, janela_horaria='24h', horas=24)")
     from .bancada import get_limites_bancada
     from .cultura import valor_cultura
     
@@ -375,6 +390,7 @@ def processar_sensor(bancada_id, janela_horaria="24h", horas=24):
         conn.close()
         
 def get_sensor_proc_ultimo(bancada_id):
+    logger.debug("get_sensor_proc_ultimo(bancada_id)")
     conn = conectar_db()
     try:
         cursor = conn.cursor()

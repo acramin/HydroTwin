@@ -2,6 +2,10 @@ import threading
 from queue import Queue
 from datetime import datetime
 
+from hydrotwin.helpers.logger import logger
+
+logger.debug("events.py")
+
 ### reader
 fila_dados = Queue(maxsize=1000)
 

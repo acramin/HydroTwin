@@ -1,6 +1,8 @@
 from hydrotwin.db.conn import conectar_db
+from hydrotwin.helpers.logger  import logger
 
 def get_alertas_ativos(bancada_id=None):
+    logger.debug("get_alertas_ativos(bancada_id=None)")
     conn = conectar_db()
     try:
         cursor = conn.cursor()

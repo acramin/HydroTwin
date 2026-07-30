@@ -1,5 +1,6 @@
 import threading
 import time
+import sys
 
 from hydrotwin.helpers.env import get_transport_mode
 from hydrotwin.transport import SerialTransport, TCPServerTransport
@@ -38,6 +39,7 @@ from hydrotwin.communication.events import stop_event, ready_event
 
 def encerrar_sistema(transport, threads):
     """Centraliza o desligamento gracioso dos recursos e threads."""
+    logger.debug("encerrar_sistema(transport, threads)")
     if stop_event.is_set() and not ready_event.is_set():
         # Evita execuções de encerramento redundantes
         pass
@@ -61,27 +63,61 @@ def encerrar_sistema(transport, threads):
 
 
 def conexao_worker(transport):
-    """Worker focado exclusivamente na abertura do transporte."""
-    try:
-        logger.info("Aguardando conexão do hardware/cliente...")
-        transport.conectar()
-        logger.info("Conexão estabelecida com sucesso!")
-        ready_event.set()
-    except Exception as e:
-        logger.critical(f"Erro crítico ao estabelecer conexão: {e}")
-        stop_event.set()
+    """Worker dedicado exclusivamente a estabelecer e manter a conexão ativa."""
+    logger.debug("conexao_worker(transport)")
+    tentativas = 0
+    INTERVALO_RECONEXAO = 2  # segundos
+
+    while not stop_event.is_set():
+        # Se a conexão foi perdida (ready_event limpo pelo transport_reader)
+        if not ready_event.is_set():
+            try:
+                tentativas += 1
+                logger.info(f"Tentando conectar/reconectar transporte... (Tentativa {tentativas})")
+                
+                # Fecha conexões antigas pendentes por segurança
+                try:
+                    transport.fechar()
+                except Exception:
+                    pass
+
+                transport.conectar()
+                
+                logger.info("Conexão estabelecida com sucesso!")
+                tentativas = 0
+                ready_event.set()  # Notifica o transport_reader para voltar a ler!
+
+            except Exception as e:
+                logger.warning(f"Reconexão falhou: {e}. Retentando em {INTERVALO_RECONEXAO}s...")
+                
+                # Se tentar por muito tempo sem sucesso (ex: 50 tentativas = 100s)
+                if tentativas >= 50:
+                    logger.critical("Impossível restabelecer conexão após várias tentativas. Encerrando.")
+                    stop_event.set()
+                    break
+
+                time.sleep(INTERVALO_RECONEXAO)
+        else:
+            # Se já está conectado, dorme um pouco para não ocupar CPU
+            time.sleep(0.5)
 
 
 def worker_com_barreira(target_func, *args):
-    """Aguardará a conexão ficar pronta usando o tempo de bloqueio nativo do Event."""
+    """Aguardará a conexão ficar pronta e tratará quedas de conexão."""
+    logger.debug("worker_com_barreira(target_func, *args)")
     while not stop_event.is_set():
-        # O wait() bloqueia a thread de forma eficiente até ready_event ser setado
-        if ready_event.wait(timeout=0.5):
-            target_func(*args)
-            break
+        # Aguarda a conexão ficar pronta (ready_event)
+        if ready_event.wait(timeout=1.0):
+            try:
+                target_func(*args)
+            except Exception as e:
+                logger.error(f"Erro na execução da worker {target_func.__name__}: {e}")
+                # Se o erro for de desconexão, limpa o ready_event para pausar as workers
+                ready_event.clear()
 
 
 def main():
+    logger.debug("main()")
     transport_mode = get_transport_mode()
     
     if transport_mode == 'serial':
@@ -128,6 +164,10 @@ def main():
         logger.info("Interrupção solicitada pelo usuário (Ctrl+C).")
     finally:
         encerrar_sistema(transport, threads)
+        
+        # Se saiu porque deu um erro (não por Ctrl+C do usuário):
+        if stop_event.is_set():
+            sys.exit(1) # Avisa o Linux/systemd que foi um encerramento por ERRO
 
 
 if __name__ == "__main__":

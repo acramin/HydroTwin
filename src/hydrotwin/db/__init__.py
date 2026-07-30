@@ -14,7 +14,11 @@ from .crud import (
     get_limites_bancada,
     get_sensor_proc_ultimo,
     get_alertas_ativos,
-    obter_status_comunicacao
+    obter_status_comunicacao,
+    criar_controlador,
+    obter_controladores_com_vagas,
+    associar_bancada_ao_controlador,
+    get_controladores
 )
 
 __all__ = [
@@ -32,5 +36,9 @@ __all__ = [
     'get_limites_bancada',
     'get_sensor_proc_ultimo',
     'get_alertas_ativos',
-    'obter_status_comunicacao'
+    'obter_status_comunicacao',
+    'criar_controlador',
+    'obter_controladores_com_vagas',
+    'associar_bancada_ao_controlador',
+    'get_controladores'
 ]

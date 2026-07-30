@@ -18,5 +18,6 @@ from .formatters import (
 
 __all__ = ['logger',
            'formatar_data',
-           'formatar_data_filete'
+           'formatar_data_filete',
+           'is_development_mode'
            ]

@@ -2,6 +2,7 @@ from hydrotwin.db.conn import conectar_db
 from hydrotwin.helpers.logger import logger
 
 def inserir_bancada(nome):
+    logger.debug("inserir_bancada(nome)")
     logger.info(f"INSERT -> {repr(nome)}") # Debug
     
     """Insere uma nova bancada (sem cultura_id, que fica no filete)"""
@@ -21,6 +22,7 @@ def inserir_bancada(nome):
 
 def update_bancada_concluido(bancada_id, flag_concluido):
     """Atualiza o status de concluído de uma bancada"""
+    logger.debug("update_bancada_concluido(bancada_id, flag_concluido)")
     conn = conectar_db()
     cursor = conn.cursor()
     
@@ -35,6 +37,7 @@ def update_bancada_concluido(bancada_id, flag_concluido):
     
 def get_bancadas():
     """Retorna lista de bancadas com seus filetes e culturas"""
+    logger.debug("get_bancadas()")
     conn = conectar_db()
     cursor = conn.cursor()
     
@@ -63,14 +66,19 @@ def get_limites_bancada(bancada_id):
     from .utils import DEFAULT_LIMITES, resolver_limites
     from .cultura import valor_cultura
     
+    logger.debug("get_limites_bancada(bancada_id)")
+    
     conn = conectar_db()
     try:
         cursor = conn.cursor()
         cultura = valor_cultura(cursor, bancada_id)
+        
+        #logger.debug(f"Cultura: {cultura}")
 
         limites = {}
         for metrica in DEFAULT_LIMITES:
             limites[metrica] = resolver_limites(cultura, metrica)
+            #logger.debug(f"{metrica}:{limites[metrica]}")
 
         return limites
     finally:

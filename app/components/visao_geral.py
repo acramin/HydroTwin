@@ -1,57 +1,93 @@
-import pandas as pd
+from __future__ import annotations
 
+from typing import Any
+import pandas as pd
 from hydrotwin import (
     formatar_data,
     get_bancadas,
     get_sensor_proc_ultimo,
-    get_alertas_ativos
+    get_alertas_ativos,
+    get_raw_recent,
+    logger
 )
 
-def get_last_status():
-    status = {}
-    
-    for bancada_id, nome, *_ in get_bancadas():
-        
-        if not bancada_id:
-            return
-        
+def get_last_status() -> dict[str, dict[str, Any]]:
+    """Retorna o status atual e a data de atualização aninhados por bancada."""
+    logger.debug("get_last_status() -> dict[str, dict[str, Any]]")
+    status_bancadas = {}
+    bancadas = get_bancadas() or []
+
+    for bancada in bancadas:
+        if not bancada or not bancada[0]:
+            continue
+
+        bancada_id, nome = bancada[0], bancada[1]
         leitura = get_sensor_proc_ultimo(bancada_id)
 
         if leitura:
-            status[nome] = leitura.get("status_exibicao")
-            status["atualizado_em"] = formatar_data(leitura["dth_calculado"])
-            continue
+            status_bancadas[nome] = {
+                "status": leitura.get("status_exibicao", "Sem dados"),
+                "atualizado_em": formatar_data(leitura.get("dth_calculado")),
+            }
         else:
-            status[nome] = "Sem dados"
-            status["atualizado_em"] = "N/A"
+            status_bancadas[nome] = {
+                "status": "Sem dados",
+                "atualizado_em": "N/A",
+            }
 
-    return status
+    return status_bancadas
 
-def get_kpis(bancada_id, nome):
-    kpis = {}
+
+def get_kpis(bancada_id: int | str) -> dict[str, Any]:
+    """Retorna o dicionário de KPIs recentes para uma bancada específica."""
+    logger.debug("get_kpis(bancada_id: int | str) -> dict[str, Any]")
+    df = get_raw_recent(bancada_id)
     
-    leitura = get_sensor_proc_ultimo(bancada_id)
+    if df is None:
+        df = pd.DataFrame()
+        
+    if not df.empty:
+        df = df.copy()
+        df["dth_recebido"] = pd.to_datetime(df["dth_recebido"], errors="coerce")
+        df = df.dropna(subset=["dth_recebido"]).sort_values("dth_recebido")
+        leitura = df.loc[df.index[-1]]
+        #logger.debug(f"{leitura.ph}")
     
-    if leitura:
-        kpis[nome] = {}
-        # nivel_tanque é categórico: 100=Normal, 0=Abaixo
-        nivel_mean = leitura["nivel_tanque_mean"]
-        kpis[nome]["nível tanque"] = "Normal" if nivel_mean >= 50 else "Abaixo"
-        kpis[nome]["ph"] = leitura["ph_mean"]
-        kpis[nome]["ec"] = leitura["ec_mean"]
-        kpis[nome]["umidade"] = leitura["umidade_mean"]
-        kpis[nome]["temperatura_ambiente"] = leitura["temperatura_ambiente_mean"]
-        kpis[nome]["temperatura_água"] = leitura["temperatura_agua_mean"]
-        kpis[nome]["luminosidade"] = leitura["luminosidade_mean"]
+    nivel_atual = leitura.nivel_tanque
+    status_tanque = "Normal" if (nivel_atual is not None and nivel_atual == 0 ) else "Abaixo"
 
-    return kpis
+    return {
+        "nivel_tanque": status_tanque,
+        "ph": leitura.ph,
+        "ec": leitura.ec,
+        "umidade": leitura.umidade,
+        "temperatura_ambiente": leitura.temperatura_ambiente,
+        "temperatura_agua": leitura.temperatura_agua,
+        "luminosidade": leitura.luminosidade,
+    }
 
-def get_alertas():
+
+def get_alertas() -> list[dict[str, Any]]:
+    """Retorna alertas ativos estruturados para facilitar renderização no frontend."""
+    logger.debug("get_alertas() -> list[dict[str, Any]]")
     alertas = []
-    
-    for bancada_id, nome, *_ in get_bancadas():
-        alertas_bancada = get_alertas_ativos(bancada_id)
+    bancadas = get_bancadas() or []
+
+    for bancada in bancadas:
+        if not bancada or not bancada[0]:
+            continue
+
+        bancada_id, nome = bancada[0], bancada[1]
+        alertas_bancada = get_alertas_ativos(bancada_id) or []
+
         for alerta in alertas_bancada:
-            alertas.append(f"{nome}: {alerta['mensagem']}")
+            mensagem = alerta.get("mensagem", "Alerta sem descrição")
+            alertas.append({
+                "bancada": nome,
+                "bancada_id": bancada_id,
+                "mensagem": mensagem,
+                "nivel": alerta.get("nivel", "atencao"),
+                "texto_formatado": f"{nome}: {mensagem}",
+            })
 
     return alertas

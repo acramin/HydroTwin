@@ -4,6 +4,7 @@ import secrets
 import hmac
 
 from hydrotwin.db.conn import conectar_db
+from hydrotwin.helpers.logger import logger
 
 ### Auxiliares ###
 def _hash_password(password, salt=None):
@@ -16,6 +17,7 @@ def _hash_password(password, salt=None):
     Returns:
         _type_: _description_
     """
+    logger.debug("_hash_password(password, salt=None)")
     salt = salt or secrets.token_bytes(16)
     password_bytes = password.encode("utf-8")
     hash_bytes = hashlib.pbkdf2_hmac("sha256", password_bytes, salt, 120_000)
@@ -31,6 +33,7 @@ def _verify_password(password, password_hash):
     Returns:
         _type_: _description_
     """
+    logger.debug("_verify_password(password, password_hash)")
     try:
         salt_b64, hash_b64 = password_hash.split("$", 1)
         salt = base64.b64decode(salt_b64)
@@ -48,6 +51,7 @@ def _verify_password(password, password_hash):
 
 ### Principais ###
 def ensure_default_admin():
+    logger.debug("ensure_default_admin()")
     from hydrotwin.helpers.env import get_admin_credentials
     DEFAULT_ADMIN_USERNAME = get_admin_credentials()[0]
     DEFAULT_ADMIN_PASSWORD = get_admin_credentials()[1]
@@ -81,6 +85,7 @@ def ensure_default_admin():
         conn.close()
         
 def criar_usuario(username, password, role="viewer"):
+    logger.debug("criar_usuario(username, password, role='viewer')")
     USER_ROLES = ("admin", "viewer")
 
     if role not in USER_ROLES:
@@ -102,7 +107,7 @@ def criar_usuario(username, password, role="viewer"):
         conn.close()
 
 def obter_usuario_por_username(username):
-
+    logger.debug("obter_usuario_por_username(username)")
     conn = conectar_db()
     try:
         cursor = conn.cursor()
@@ -128,6 +133,7 @@ def obter_usuario_por_username(username):
         conn.close()
 
 def autenticar_usuario(username, password):
+    logger.debug("autenticar_usuario(username, password)")
     usuario = obter_usuario_por_username(username)
     if usuario is None:
         return None

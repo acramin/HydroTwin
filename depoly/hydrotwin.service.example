@@ -1,0 +1,18 @@
+[Unit]
+Description=Servico Hydrotwin Streamlit
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/caminho/para/seu/projeto
+ExecStart=/caminho/para/seu/projeto/start.sh
+Restart=always
+RestartSec=5
+
+# Variáveis de ambiente extras, se necessário
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/caminho/para/seu/projeto/.env
+
+[Install]
+WantedBy=multi-user.target

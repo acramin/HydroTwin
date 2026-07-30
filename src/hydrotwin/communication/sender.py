@@ -12,36 +12,16 @@ from hydrotwin.communication.events import (
 )
 from hydrotwin.db.crud.cultura import obter_parametros_cultura
 from hydrotwin.helpers.logger import logger
+from hydrotwin.communication.parser import formatar_mensagem_parametros
 
 # ================= CONFIGURAÇÃO =================
 CONFIRM_TIMEOUT = 10  # Tempo limite para resposta do hardware (segundos)
-
-# ================= FORMATO DE MENSAGEM =================
-def formatar_mensagem_parametros(bancada_id: int, cultura_id: int, parametros: dict) -> str | None:
-    """
-    Formata mensagem para enviar parâmetros ao Arduino.
-    Formato: PARAMS,bancada_id=X,cultura_id=Y,ph_min=...,ph_max=...,ec_min=...,ec_max=...,dias_ciclo=...
-    """
-    if not parametros:
-        return None
-
-    msg_parts = [
-        "PARAMS",
-        f"bancada_id={bancada_id}",
-        f"cultura_id={cultura_id}",
-        f"ph_min={parametros.get('ph_min', '')}",
-        f"ph_max={parametros.get('ph_max', '')}",
-        f"ec_min={parametros.get('ec_min', '')}",
-        f"ec_max={parametros.get('ec_max', '')}",
-        f"dias_ciclo={parametros.get('dias_ciclo', '')}",
-    ]
-
-    return ",".join(msg_parts) + "\n"
 
 
 # ================= WORKER DE ENVIO =================
 def atualizar_status(bancada_id: int, status: str, mensagem: str):
     """Atualiza o dicionário global de status de envio de forma thread-safe."""
+    logger.debug("atualizar_status(bancada_id: int, status: str, mensagem: str)")
     with status_envios_lock:
         status_envios[bancada_id] = {
             "status": status,
@@ -52,6 +32,7 @@ def atualizar_status(bancada_id: int, status: str, mensagem: str):
 
 def enviar_parametros_ideais_worker(transport):
     """Worker que processa a fila de envios e aguarda confirmação do Arduino."""
+    logger.debug("enviar_parametros_ideais_worker(transport)")
     logger.info("Worker de envio de parâmetros iniciado.")
 
     # Cache local para guardar confirmações recebidas fora de ordem
@@ -60,11 +41,16 @@ def enviar_parametros_ideais_worker(transport):
     while not stop_event.is_set():
         # Aguarda a conexão estar pronta
         if not ready_event.wait(timeout=1.0):
+            logger.debug("Worker aguardando ready_event ser setado...")
             continue
 
         try:
             bancada_id, cultura_id = fila_envio.get(timeout=1.0)
         except Empty:
+            logger.debug(f"Fila de Envio vazia!!")
+            continue
+        except Exception as e:
+            logger.error(f"Erro inesperado no get da fila: {e}")
             continue
 
         logger.info(f"Processando solicitação de envio -> Bancada: {bancada_id}, Cultura: {cultura_id}")
@@ -86,20 +72,19 @@ def enviar_parametros_ideais_worker(transport):
             msg_erro = f"Erro ao enviar pelo transporte: {e}"
             logger.error(msg_erro)
             atualizar_status(bancada_id, "erro", msg_erro)
-            ready_event.clear()
             continue
 
         # Aguarda confirmação de recebimento do hardware
         confirmado = False
         limite_tempo = time.time() + CONFIRM_TIMEOUT
 
-        # logger.info(f'Antes do While de confirmação!')
-        # logger.info(f'Check 1 (tempo): {time.time() < limite_tempo}')
-        # logger.info(f'Check 2 (event): {not stop_event.is_set()}')
-        # logger.info(f'Check 3 (confirmado): {not confirmado}')
+        # logger.debug(f'Antes do While de confirmação!')
+        # logger.debug(f'Check 1 (tempo): {time.time() < limite_tempo}')
+        # logger.debug(f'Check 2 (event): {not stop_event.is_set()}')
+        # logger.debug(f'Check 3 (confirmado): {not confirmado}')
 
         while time.time() < limite_tempo and not stop_event.is_set() and not confirmado:
-            logger.info(f'Inicio do While:')
+            #logger.debug(f'Inicio do While:')
             # 1. Verifica se já temos a resposta no cache local de fora de ordem
             if bancada_id in confirmacoes_pendentes:
                 # logger.info(f'Temos confirmacoes pendentes!')
@@ -107,7 +92,7 @@ def enviar_parametros_ideais_worker(transport):
             else:
                 try:
                     confirmacao = fila_confirmacao.get(timeout=1.0)
-                    # logger.info(f'Bloco de fila_confirmacao: {confirmacao}')
+                    # logger.debug(f'Bloco de fila_confirmacao: {confirmacao}')
                 except Empty:
                     # logger.info('Fila de confirmacao vazia')
                     continue

@@ -18,7 +18,7 @@ from hydrotwin import (
 st.set_page_config(
     page_title="HydroTwin - Painel de Simulação",
     layout="wide",
-    page_icon="🧪",
+    page_icon="🕹️",
 )
 
 # ==========================================

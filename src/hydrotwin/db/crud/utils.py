@@ -4,7 +4,7 @@ DEFAULT_LIMITES = {
     "temperatura_ambiente": (18.0, 26.0),
     "temperatura_agua": (10.0, 30.0),
     "luminosidade": (12000, 17000),
-    "nivel_tanque": (0, 100.0),
+    "nivel_tanque": (0, 1),
     "umidade": (45.0, 75.0),
 }
 
@@ -26,7 +26,7 @@ def resolver_limites(cultura, metrica):
     # Se uma cultura existe, valores explícitos têm precedência e limites ausentes
     # não são preenchidos automaticamente com valores padrão.
     if not cultura:
-        logger.debug(f"Usando limites padrão")
+        logger.warning(f"Usando limites padrão")
         limite_min, limite_max = DEFAULT_LIMITES.get(metrica, (None, None))
 
     return limite_min, limite_max

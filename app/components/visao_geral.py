@@ -40,10 +40,10 @@ def get_kpis(bancada_id: int | str) -> dict[str, Any]:
     if not leitura:
         return {}
 
-    # nivel_tanque é categórico: >= 50 é Normal, < 50 é Abaixo
+    # nivel_tanque é categórico: <= 50 é Normal, > 50 é Abaixo
     nivel_mean = leitura.get("nivel_tanque_mean")
     status_nivel = (
-        "Normal" if (nivel_mean is not None and nivel_mean >= 50) else "Abaixo"
+        "Normal" if (nivel_mean is not None and nivel_mean <= 50) else "Abaixo"
     )
 
     return {

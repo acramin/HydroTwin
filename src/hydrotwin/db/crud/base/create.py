@@ -5,6 +5,8 @@ def create_tables():
     conn = conectar_db()
     cursor = conn.cursor()
     
+    cursor.execute("PRAGMA foreign_keys = ON;")
+    
     # Tabela de bancada
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS bancada (
@@ -38,7 +40,10 @@ def create_tables():
         ph_max REAL,
         ec_min REAL,
         ec_max REAL,
-        dias_ciclo INTEGER
+        dias_ciclo INTEGER,
+        tempo_luz_acesa REAL,
+        lux_min REAL,
+        lux_max REAL
     )
     """)
 
@@ -122,6 +127,18 @@ def create_tables():
         created_at DATETIME DEFAULT (datetime('now', '-3 hours'))
     );
     """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS controlador (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        bancada1_id INTEGER,
+        bancada2_id INTEGER,
+        FOREIGN KEY (bancada1_id) REFERENCES bancada(id),
+        FOREIGN KEY (bancada2_id) REFERENCES bancada(id)
+    );
+    """)
+    
     
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_raw_bancada_tempo ON sensor_raw(bancada_id, dth_recebido);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_raw_tempo ON sensor_raw(dth_recebido);")

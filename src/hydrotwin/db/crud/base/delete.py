@@ -11,6 +11,7 @@ def drop_tables():
     cursor.execute("DROP TABLE IF EXISTS sensor_proc;")
     cursor.execute("DROP TABLE IF EXISTS alerta;")
     cursor.execute("DROP TABLE IF EXISTS usuario;")
+    cursor.execute("DROP TABLE IF EXISTS controlador;")
     
     conn.commit()
     conn.close()

@@ -53,7 +53,7 @@ def valor_cultura(cursor, bancada_id):
     """Retorna os parâmetros da cultura do filete mais recente da bancada"""
     cursor.execute(
         """
-        SELECT c.id, c.nome, c.ph_min, c.ph_max, c.ec_min, c.ec_max, c.dias_ciclo
+        SELECT c.id, c.nome, c.ph_min, c.ph_max, c.ec_min, c.ec_max, c.dias_ciclo, tempo_luz_acesa, lux_min, lux_max
         FROM filete f
         LEFT JOIN cultura c ON c.id = f.cultura_id
         WHERE f.bancada_id = ?
@@ -76,6 +76,9 @@ def valor_cultura(cursor, bancada_id):
         "ec_min": linha[4],
         "ec_max": linha[5],
         "dias_ciclo": linha[6],
+        "tempo_luz_acesa": linha[7],
+        "lux_min": linha[8], 
+        "lux_max": linha[9]
     }
 
 ## esse é pela cultura mesmo - usado no sender  

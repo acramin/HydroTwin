@@ -75,7 +75,7 @@ def parser_arduino_id(linha : str):
         return arduino_id
         
     except (ValueError, IndexError) as e:
-        logger.warning(f"Falha ao parsear linha de cadastro coontrolador ('{linha}'): {e}")
+        logger.warning(f"Falha ao parsear linha de cadastro controlador ('{linha}'): {e}")
         return None
 
 # ================= PARSERS SENDER =================

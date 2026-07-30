@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from typing import Any
+import pandas as pd
 from hydrotwin import (
     formatar_data,
     get_bancadas,
     get_sensor_proc_ultimo,
     get_alertas_ativos,
+    get_raw_recent,
+    logger
 )
 
 def get_last_status() -> dict[str, dict[str, Any]]:
@@ -36,24 +39,29 @@ def get_last_status() -> dict[str, dict[str, Any]]:
 
 def get_kpis(bancada_id: int | str) -> dict[str, Any]:
     """Retorna o dicionário de KPIs recentes para uma bancada específica."""
-    leitura = get_sensor_proc_ultimo(bancada_id)
-    if not leitura:
-        return {}
-
-    # nivel_tanque é categórico: <= 50 é Normal, > 50 é Abaixo
-    nivel_mean = leitura.get("nivel_tanque_mean")
-    status_nivel = (
-        "Normal" if (nivel_mean is not None and nivel_mean <= 50) else "Abaixo"
-    )
+    df = get_raw_recent(bancada_id)
+    
+    if df is None:
+        df = pd.DataFrame()
+        
+    if not df.empty:
+        df = df.copy()
+        df["dth_recebido"] = pd.to_datetime(df["dth_recebido"], errors="coerce")
+        df = df.dropna(subset=["dth_recebido"]).sort_values("dth_recebido")
+        leitura = df.loc[df.index[-1]]
+        #logger.debug(f"{leitura.ph}")
+    
+    nivel_atual = leitura.nivel_tanque
+    status_tanque = "Normal" if (nivel_atual is not None and nivel_atual == 0 ) else "Abaixo"
 
     return {
-        "nivel_tanque": status_nivel,
-        "ph": leitura.get("ph_mean"),
-        "ec": leitura.get("ec_mean"),
-        "umidade": leitura.get("umidade_mean"),
-        "temperatura_ambiente": leitura.get("temperatura_ambiente_mean"),
-        "temperatura_agua": leitura.get("temperatura_agua_mean"),
-        "luminosidade": leitura.get("luminosidade_mean"),
+        "nivel_tanque": status_tanque,
+        "ph": leitura.ph,
+        "ec": leitura.ec,
+        "umidade": leitura.umidade,
+        "temperatura_ambiente": leitura.temperatura_ambiente,
+        "temperatura_agua": leitura.temperatura_agua,
+        "luminosidade": leitura.luminosidade,
     }
 
 

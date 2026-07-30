@@ -175,5 +175,5 @@ st.divider()
 st.markdown("### ❓ Dúvidas não encontradas?")
 st.info(
     "📖 Para consultar a documentação técnica completa, código fonte e arquitetura do projeto, "
-    "acesse o repositório oficial no GitHub: **[HydroTwin GitHub Repository](https://github.com/acramin/hydrotwin)**"
+    "acesse o repositório oficial no GitHub: **[HydroTwin GitHub Repository](https://github.com/acramin/HydroTwin)**"
 )

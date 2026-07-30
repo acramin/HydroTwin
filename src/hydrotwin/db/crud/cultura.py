@@ -6,31 +6,31 @@ def insert_culturas():
     cursor = conn.cursor()
 
     culturas = [
-        ('Alface', 5.5, 6.5, 0.8, 1.2, 50),
-        ('Agrião', 6.0, 6.8, 1.2, 1.8, 45),
-        ('Rúcula', 5.5, 6.5, 1.2, 1.8, 35),
-        ('Espinafre', 5.5, 6.6, 1.2, 1.8, 50),
-        ('Couve', 6.0, 7.5, 1.2, 2.0, 90),
-        ('Acelga', 6.0, 6.5, 1.2, 1.8, 60),
-        ('Escarola', 5.5, 6.5, 1.2, 1.8, 80),
-        ('Cebolinha', 6.0, 7.0, 1.4, 1.8, 90),
-        ('Manjericão', 5.5, 6.5, 1.0, 1.6, 45),
-        ('Coentro', 6.0, 6.7, 1.2, 1.8, 40),
-        ('Hortelã', 5.5, 6.5, 1.4, 1.8, 40),
-        ('Orégano', 6.0, 7.0, 1.2, 2.0, 60),
-        ('Alecrim', 5.5, 6.0, 1.0, 1.6, 90),
-        ('Tomilho', 5.5, 6.5, 0.8, 1.5, 40),
-        ('Salvia', 5.5, 6.5, 1.0, 1.6, 120),
-        ('Cereja', 5.5, 6.5, 2.0, 3.5, 140),
-        ('Morango', 5.5, 6.2, 1.0, 1.4, 90),
-        ('Pimentão', 5.5, 6.5, 1.8, 2.5, 120),
-        ('Pepino', 5.5, 6.5, 1.7, 2.5, 70)
+        ('Alface', 5.5, 6.5, 0.8, 1.2, 50, 14, 12000, 17000),
+        ('Agrião', 6.0, 6.8, 1.2, 1.8, 45, 14, 12000, 17000),
+        ('Rúcula', 5.5, 6.5, 1.2, 1.8, 35, 14, 14000, 20000),
+        ('Espinafre', 5.5, 6.6, 1.2, 1.8, 50, 14, 12000, 17000),
+        ('Couve', 6.0, 7.5, 1.2, 2.0, 90, 14, 12000, 17000),
+        ('Acelga', 6.0, 6.5, 1.2, 1.8, 60, 14, 12000, 17000),
+        ('Escarola', 5.5, 6.5, 1.2, 1.8, 80, 14, 14000, 20000),
+        ('Cebolinha', 6.0, 7.0, 1.4, 1.8, 90, 14, 12000, 17000),
+        ('Manjericão', 5.5, 6.5, 1.0, 1.6, 45, 14, 12000, 17000),
+        ('Coentro', 6.0, 6.7, 1.2, 1.8, 40, 14, 14000, 20000),
+        ('Hortelã', 5.5, 6.5, 1.4, 1.8, 40, 14, 12000, 17000),
+        ('Orégano', 6.0, 7.0, 1.2, 2.0, 60, 14, 12000, 17000),
+        ('Alecrim', 5.5, 6.0, 1.0, 1.6, 90, 14, 12000, 17000),
+        ('Tomilho', 5.5, 6.5, 0.8, 1.5, 40, 14, 14000, 20000),
+        ('Salvia', 5.5, 6.5, 1.0, 1.6, 120, 14, 12000, 17000),
+        ('Cereja', 5.5, 6.5, 2.0, 3.5, 140, 14, 12000, 17000),
+        ('Morango', 5.5, 6.2, 1.0, 1.4, 90, 14, 12000, 17000),
+        ('Pimentão', 5.5, 6.5, 1.8, 2.5, 120, 14, 12000, 17000),
+        ('Pepino', 5.5, 6.5, 1.7, 2.5, 70, 14, 12000, 17000),
     ]
 
     for cultura in culturas:
         cursor.execute("""
-        INSERT OR IGNORE INTO cultura (nome, ph_min, ph_max, ec_min, ec_max, dias_ciclo)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT OR IGNORE INTO cultura (nome, ph_min, ph_max, ec_min, ec_max, dias_ciclo, tempo_luz_acesa, lux_min, lux_max)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, cultura)
         
     conn.commit()
@@ -65,6 +65,7 @@ def valor_cultura(cursor, bancada_id):
     linha = cursor.fetchone()
 
     if not linha or linha[0] is None:
+        logger.debug(f"Retorno vazio. Usar valores padrão para avaliações.")
         return {}
 
     return {
@@ -77,7 +78,7 @@ def valor_cultura(cursor, bancada_id):
         "dias_ciclo": linha[6],
     }
 
-## esse é pela cultura mesmo    
+## esse é pela cultura mesmo - usado no sender  
 def obter_parametros_cultura(cultura_id: int) -> dict | None:
     """Retorna os parâmetros ideais de uma cultura a partir do banco de dados."""
     conn = conectar_db()
@@ -88,7 +89,7 @@ def obter_parametros_cultura(cultura_id: int) -> dict | None:
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, nome, ph_min, ph_max, ec_min, ec_max, dias_ciclo
+            SELECT id, nome, ph_min, ph_max, ec_min, ec_max, dias_ciclo, tempo_luz_acesa, lux_min, lux_max
             FROM cultura
             WHERE id = ?
         """, (cultura_id,))
@@ -107,6 +108,9 @@ def obter_parametros_cultura(cultura_id: int) -> dict | None:
             "ec_min": resultado[4],
             "ec_max": resultado[5],
             "dias_ciclo": resultado[6],
+            "tempo_luz_acesa" : resultado[7],
+            "lux_min" : resultado[8],
+            "lux_max" : resultado[9]
         }
     except Exception as e:
         logger.error(f"Erro ao buscar cultura {cultura_id} no banco: {e}")

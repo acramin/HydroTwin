@@ -46,7 +46,11 @@ __all__ = [
     'get_limites_bancada',
     'get_sensor_proc_ultimo',
     'get_alertas_ativos',
-    'obter_status_comunicacao'
+    'obter_status_comunicacao',
+    'bancadas_preenchidas',
+    'contar_controladores',
+    'atualizar_bancadas_controlador',
+    'get_controladores',
     
     ### Tools
     'gerar_telemetria_tupla'

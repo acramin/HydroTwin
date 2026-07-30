@@ -27,6 +27,13 @@ from .sensor import (
 
 from .comunicacao import obter_status_comunicacao
 
+from .controlador import (
+    criar_controlador,
+    obter_controladores_com_vagas,
+    associar_bancada_ao_controlador,
+    get_controladores
+)
+
 __all__ = [
     'autenticar_usuario',
     'criar_usuario',
@@ -41,5 +48,9 @@ __all__ = [
     'get_limites_bancada',
     'get_sensor_proc_ultimo',
     'get_alertas_ativos',
-    'obter_status_comunicacao'
+    'obter_status_comunicacao',
+    'criar_controlador',
+    'obter_controladores_com_vagas',
+    'associar_bancada_ao_controlador',
+    'get_controladores'
 ]

@@ -29,8 +29,8 @@ def _inicializar_estado():
         "ec": random.uniform(1.0, 1.5),
         "temp_ar": random.uniform(20, 26),
         "temp_agua": random.uniform(18, 24),
-        "luz": random.uniform(10, 14),
-        "nivel": random.uniform(0, 100),
+        "luz": random.uniform(12000, 17000),
+        "nivel": random.choice([0, 1]),
         "umidade": random.uniform(55, 65),
         "bomba_ligada": True
     }
@@ -45,16 +45,16 @@ def _atualizar_estado(estado):
     estado["ec"] = drift(estado["ec"], 0.05, 0.5, 2.5)
     estado["temp_ar"] = drift(estado["temp_ar"], 0.2, 15, 30)
     estado["temp_agua"] += (estado["temp_ar"] - estado["temp_agua"]) * 0.05
-    estado["luz"] = drift(estado["luz"], 0.5, 8, 16)
+    estado["luz"] = drift(estado["luz"], 0.5, 8000, 20000)
     estado["umidade"] = drift(estado["umidade"], 0.5, 40, 90)
 
     if random.random() < 0.001:
         estado["bomba_ligada"] = not estado["bomba_ligada"]
 
     if estado["bomba_ligada"]:
-        estado["nivel"] = 100
-    else:
         estado["nivel"] = 0
+    else:
+        estado["nivel"] = 1
 
     return estado
 

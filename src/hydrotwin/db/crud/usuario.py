@@ -49,7 +49,14 @@ def _verify_password(password, password_hash):
     )
     return hmac.compare_digest(candidate_hash, expected_hash)
 
+def _generate_access_code():
+    """Gera um código de acesso aleatório de 5 caracteres alfanuméricos."""
+    logger.debug("_generate_access_code()")
+    return secrets.token_urlsafe(4)[:5]
+
 ### Principais ###
+code = _generate_access_code() 
+
 def ensure_default_admin():
     logger.debug("ensure_default_admin()")
     from hydrotwin.helpers.env import get_admin_credentials
@@ -84,8 +91,10 @@ def ensure_default_admin():
     finally:
         conn.close()
         
-def criar_usuario(username, password, role="viewer"):
-    logger.debug("criar_usuario(username, password, role='viewer')")
+def criar_usuario(email, role="viewer"):
+    from hydrotwin.authentication.email import enviar_email_acesso
+    
+    logger.debug("criar_usuario(email, role='viewer')")
     USER_ROLES = ("admin", "viewer")
 
     if role not in USER_ROLES:
@@ -93,16 +102,87 @@ def criar_usuario(username, password, role="viewer"):
 
     conn = conectar_db()
     try:
+        enviar_email_acesso(email)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO usuario (role, code, email)
+                VALUES (?, ?, ?)
+                """,
+                (role, code, email),
+            )
+            conn.commit()
+            return cursor.lastrowid
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Erro ao criar usuário: {e}")
+        raise e
+
+def update_usuario(email, username, password, code=None):
+    logger.debug("update_usuario(email, username, password, code=None)")
+    
+    access_code = get_access_code(email)
+    
+    if code != access_code:
+            raise ValueError("Permissão negada. Insira um código de acesso válido.")
+    
+    conn = conectar_db()
+    try:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO usuario (username, password_hash, role)
-            VALUES (?, ?, ?)
+            UPDATE usuario
+            SET username = ?, password_hash = ?
+            WHERE email = ?
             """,
-            (username.strip(), _hash_password(password), role),
+            (username.strip(), _hash_password(password), email),
         )
         conn.commit()
         return cursor.lastrowid
+    finally:
+        conn.close()
+
+def get_access_code(email):
+    conn = conectar_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT code
+            FROM usuario
+            WHERE email = ?
+            """,
+            (email,),
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
+    finally:
+        conn.close()
+
+def obter_todos_usuarios():
+    logger.debug("obter_todos_usuarios()")
+    conn = conectar_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, username, role, code, email
+            FROM usuario
+            """
+        )
+        linhas = cursor.fetchall()
+        return [
+            {
+                "id": linha[0],
+                "username": linha[1],
+                "role": linha[2],
+                "code": linha[3],
+                "email": linha[4],
+            }
+            for linha in linhas
+        ]
     finally:
         conn.close()
 

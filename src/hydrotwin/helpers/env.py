@@ -58,7 +58,7 @@ def get_transport_mode():
     logger.debug("get_transport_mode()")
     transport_mode = (os.getenv("TRANSPORT_MODE") or "tcp").strip().lower()
     if transport_mode not in {"tcp", "serial"}:
-        logger.waring(f"TRANSPORT_MODE '{transport_mode}' inválido. Usando 'tcp'.")
+        logger.warning(f"TRANSPORT_MODE '{transport_mode}' inválido. Usando 'tcp'.")
         return "tcp"
     logger.info(f"TRANSPORT_MODE definido como '{transport_mode}'.")
     return transport_mode

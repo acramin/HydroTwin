@@ -29,10 +29,10 @@ __all__ = [
     'logout_user',
     'set_current_user',
     'get_current_user',
-    'bootstrap_auth'
+    'bootstrap_auth',
     
     ### DB
-    'conectar_db'
+    'conectar_db',
     'autenticar_usuario',
     'criar_usuario',
     'get_culturas',
@@ -51,6 +51,9 @@ __all__ = [
     'contar_controladores',
     'atualizar_bancadas_controlador',
     'get_controladores',
+    'obter_todos_usuarios',
+    'get_access_code',
+    'update_usuario',
     
     ### Tools
     'gerar_telemetria_tupla'

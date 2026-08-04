@@ -123,9 +123,11 @@ def create_tables():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuario (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
+        username TEXT NOT NULL UNIQUE DEFAULT 'user',
+        password_hash TEXT NOT NULL DEFAULT 'default_hash',
         role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'viewer')),
+        code TEXT NOT NULL DEFAULT 'CAD07',
+        email TEXT NOT NULL UNIQUE DEFAULT 'default@email.com',
         created_at DATETIME DEFAULT (datetime('now', '-3 hours'))
     );
     """)

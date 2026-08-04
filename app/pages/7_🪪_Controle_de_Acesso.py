@@ -1,35 +1,40 @@
 from __future__ import annotations
 
+import pandas as pd
 import streamlit as st
 
 from hydrotwin import (
-    get_current_user,
-    require_page_access,
     criar_usuario,
+    get_current_user,
+    logger,
     obter_todos_usuarios,
-    logger
+    require_page_access,
 )
-
 
 logger.debug("7_🪪_Controle_de_Acesso.py")
 
-
 # Configuração da página
 st.set_page_config(
-    page_title="Controle de Acesso", layout="wide", page_icon="🌱"
+    page_title="Controle de Acesso - HydroTwin",
+    layout="wide",
+    page_icon="🌱",
 )
-
-st.title("🪪 Controle de Acesso")
 
 # ==========================================
 # 🔐 Autenticação e Permissão
 # ==========================================
-usuario = get_current_user()
-if usuario is None:
+usuario_logado = get_current_user()
+if usuario_logado is None:
     st.error("❌ Você precisa estar autenticado para acessar esta página.")
     st.stop()
 
-require_page_access(usuario, "Controle de Acesso")
+require_page_access(usuario_logado, "Controle de Acesso")
+
+# Cabeçalho da Página
+st.title("🪪 Controle de Acesso")
+st.caption("Gerencie os usuários do sistema, permissões de acesso e novos convites.")
+
+st.divider()
 
 # Organização por Abas
 tab_listar, tab_cadastrar = st.tabs(
@@ -40,39 +45,142 @@ tab_listar, tab_cadastrar = st.tabs(
 # TAB 1: LISTAR E GERENCIAR USUÁRIOS
 # ==========================================
 with tab_listar:
-    st.header(
-        "Usuários Cadastrados",
-        help="Visualize e gerencie usuários do sistema de monitoramento.",
-    )
-    
-    # usar obter_todos_usuarios() para listar todos os usuários cadastrados
-    usuarios = obter_todos_usuarios()
-    for usuario in usuarios:
-        st.write(f"• {usuario['email']} ({usuario['role']}) código de acesso: {usuario['code']}")
+    usuarios = obter_todos_usuarios() or []
+
+    if not usuarios:
+        st.info("ℹ️ Nenhum usuário encontrado no sistema.")
+    else:
+        # --- 📊 Métricas Rápidas ---
+        total_usuarios = len(usuarios)
+        total_admins = sum(1 for u in usuarios if u.get("role") == "admin")
+        total_viewers = sum(1 for u in usuarios if u.get("role") == "viewer")
+
+        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1.metric("Total de Usuários", total_usuarios)
+        col_m2.metric("Administradores", total_admins)
+        col_m3.metric("Visualizadores (Viewer)", total_viewers)
+
+        st.markdown("---")
+
+        # --- 🔍 Filtros de Busca ---
+        col_busca, col_filtro_role = st.columns([3, 1])
+        with col_busca:
+            termo_busca = st.text_input(
+                "🔎 Buscar por e-mail",
+                placeholder="Digite para filtrar...",
+                label_visibility="collapsed",
+            )
+        with col_filtro_role:
+            filtro_role = st.selectbox(
+                "Filtrar por Função",
+                options=["Todos", "admin", "viewer"],
+                label_visibility="collapsed",
+            )
+
+        # Filtragem dos dados
+        usuarios_filtrados = usuarios
+        if termo_busca:
+            usuarios_filtrados = [
+                u for u in usuarios_filtrados if termo_busca.lower() in u.get("email", "").lower()
+            ]
+        if filtro_role != "Todos":
+            usuarios_filtrados = [
+                u for u in usuarios_filtrados if u.get("role") == filtro_role
+            ]
+
+        # --- 📋 Tabela de Usuários ---
+        if usuarios_filtrados:
+            df_usuarios = pd.DataFrame(usuarios_filtrados)
+            
+            # Renomear colunas para exibição amigável
+            colunas_map = {
+                "email": "E-mail",
+                "role": "Função (Role)",
+                "code": "Código de Acesso",
+            }
+            
+            # Seleciona e renomeia apenas as colunas existentes
+            cols_presentes = [c for c in colunas_map.keys() if c in df_usuarios.columns]
+            df_display = df_usuarios[cols_presentes].rename(columns=colunas_map)
+
+            st.dataframe(
+                df_display,
+                width='stretch',
+                hide_index=True,
+                column_config={
+                    "E-mail": st.column_config.TextColumn("E-mail", width="large"),
+                    "Função (Role)": st.column_config.TextColumn("Função", width="medium"),
+                    "Código de Acesso": st.column_config.TextColumn("Código de Acesso", width="medium"),
+                },
+            )
+        else:
+            st.warning("Nenhum usuário atende aos critérios de busca.")
 
 
 # ==========================================
 # TAB 2: CADASTRO DE NOVO USUÁRIO
 # ==========================================
 with tab_cadastrar:
-    st.header(
-        "Cadastrar Novo Usuário",
-        help="Crie um novo usuário e libere o código de acesso.",
-    )
+    if "sucesso_cadastro" in st.session_state:
+        msg = st.session_state.pop("sucesso_cadastro")
+        st.success(msg)
+        st.toast(f"Convite enviado com sucesso!", icon="🎉")
+            
+    st.subheader("➕ Cadastrar Novo Usuário")
+    st.caption("Crie um novo acesso e envie o código de liberação para o e-mail informado.")
 
-    with st.form("register_form", clear_on_submit=True):
-        email = st.text_input("E-mail do Novo Usuário", placeholder="ex: joao.silva@exemplo.com")
-        role = st.selectbox("Função do Usuário", options=["viewer", "admin"], index=0)
-        btn_cadastro = st.form_submit_button(
-            "Enviar email", width='stretch'
-        )
+    col_form, col_info = st.columns([2, 1], gap="large")
 
-    if btn_cadastro:
-        if not email:
-            st.warning("⚠️ Informe o e-mail do novo usuário.")
-        else:
-            try:
-                criar_usuario(email, role=role)
-                st.success(f"✅ Código de cadastro enviado para {email}.")
-            except Exception as e:
-                st.error(f"❌ Erro ao enviar email para {email}: {e}")
+    with col_form:
+        with st.container(border=True):
+            with st.form("register_form", clear_on_submit=True):
+                email = st.text_input(
+                    "E-mail do Novo Usuário *",
+                    placeholder="ex: joao.silva@exemplo.com",
+                    help="O código de primeiro acesso será gerado para este e-mail.",
+                )
+                
+                role = st.selectbox(
+                    "Função no Sistema *",
+                    options=["viewer", "admin"],
+                    index=0,
+                    format_func=lambda x: "👑 Administrador (admin)" if x == "admin" else "👁️ Visualizador (viewer)",
+                )
+
+                st.markdown("---")
+                btn_cadastro = st.form_submit_button(
+                    "📧 Cadastrar e Enviar Convite",
+                    type="primary",
+                    width='stretch',
+                )
+
+        if btn_cadastro:
+            if not email or "@" not in email:
+                st.warning("⚠️ Por favor, informe um endereço de e-mail válido.")
+            else:
+                try:
+                    with st.spinner("Gerando acesso e enviando e-mail..."):
+                        criar_usuario(email, role=role)
+                    
+                    st.session_state["sucesso_cadastro"] = f"✅ Usuário `{email}` cadastrado com sucesso!"
+                    
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ Erro ao cadastrar usuário `{email}`: {e}")
+
+    # --- Card de Informações sobre Permissões ---
+    with col_info:
+        with st.container(border=True):
+            st.markdown("### ℹ️ Sobre as Funções")
+            st.markdown(
+                """
+                **👁️ Viewer (Visualizador)**
+                * Acesso de leitura aos Dashboards e Monitoramento.
+                * Sem permissão para alterar configurações ou cadastrar dados.
+
+                **👑 Admin (Administrador)**
+                * Acesso total a todas as telas do sistema.
+                * Permissão para gerenciar bancadas, simulador e novos usuários.
+                """
+            )

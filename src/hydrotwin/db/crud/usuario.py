@@ -55,6 +55,8 @@ def _generate_access_code():
     return secrets.token_urlsafe(4)[:5]
 
 ### Principais ###
+code = _generate_access_code() 
+
 def ensure_default_admin():
     logger.debug("ensure_default_admin()")
     from hydrotwin.helpers.env import get_admin_credentials
@@ -90,28 +92,33 @@ def ensure_default_admin():
         conn.close()
         
 def criar_usuario(email, role="viewer"):
+    from hydrotwin.authentication.email import enviar_email_acesso
+    
     logger.debug("criar_usuario(email, role='viewer')")
     USER_ROLES = ("admin", "viewer")
 
     if role not in USER_ROLES:
         raise ValueError("Role inválida.")
 
-    code = _generate_access_code()
-
     conn = conectar_db()
     try:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO usuario (role, code, email)
-            VALUES (?, ?, ?)
-            """,
-            (role, code, email),
-        )
-        conn.commit()
-        return cursor.lastrowid
-    finally:
-        conn.close()
+        enviar_email_acesso(email)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO usuario (role, code, email)
+                VALUES (?, ?, ?)
+                """,
+                (role, code, email),
+            )
+            conn.commit()
+            return cursor.lastrowid
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Erro ao criar usuário: {e}")
+        raise e
 
 def update_usuario(email, username, password, code=None):
     logger.debug("update_usuario(email, username, password, code=None)")

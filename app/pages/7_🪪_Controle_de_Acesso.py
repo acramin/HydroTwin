@@ -7,7 +7,6 @@ from hydrotwin import (
     require_page_access,
     criar_usuario,
     obter_todos_usuarios,
-    get_access_code,
     logger
 )
 
@@ -49,7 +48,7 @@ with tab_listar:
     # usar obter_todos_usuarios() para listar todos os usuários cadastrados
     usuarios = obter_todos_usuarios()
     for usuario in usuarios:
-        st.write(f"• {usuario['email']} ({usuario['role']})")
+        st.write(f"• {usuario['email']} ({usuario['role']}) código de acesso: {usuario['code']}")
 
 
 # ==========================================
@@ -72,5 +71,8 @@ with tab_cadastrar:
         if not email:
             st.warning("⚠️ Informe o e-mail do novo usuário.")
         else:
-            criar_usuario(email, role=role)
-            st.success(f"✅ Código de cadastro enviado para {email}.")
+            try:
+                criar_usuario(email, role=role)
+                st.success(f"✅ Código de cadastro enviado para {email}.")
+            except Exception as e:
+                st.error(f"❌ Erro ao enviar email para {email}: {e}")

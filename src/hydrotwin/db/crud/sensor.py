@@ -232,20 +232,31 @@ def inserir_leitura_sensor(conn, dados: tuple) -> int:
     finally:
         cursor.close()
 
-def get_raw_recent(bancada_id=None, horas=24):
-    logger.debug("get_raw_recent(bancada_id=None, horas=24)")
+def get_raw_recent(bancada_id=None, horas=24, since=None):
+    logger.debug("get_raw_recent(bancada_id=None, horas=24, since=None)")
     from datetime import datetime, timedelta
-    ## usado no monitoramento detalhado e no processar
-    
+
     def _query_dataframe(query, params=None):
         conn = conectar_db()
         try:
             return pd.read_sql_query(query, conn, params=params)
         finally:
             conn.close()
-    
+
     filtro_bancada = ""
-    params = [(datetime.now() - timedelta(hours=horas)).strftime("%Y-%m-%d %H:%M:%S")]
+    filtro_since = ""
+    params = []
+
+    data_limite = (datetime.now() - timedelta(hours=horas)).strftime("%Y-%m-%d %H:%M:%S")
+    params.append(data_limite)
+
+    if since is not None:
+        if hasattr(since, "strftime"):
+            since_value = since.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            since_value = str(since)
+        filtro_since = " AND dth_recebido > ?"
+        params.append(since_value)
 
     if bancada_id is not None:
         filtro_bancada = " AND bancada_id = ?"
@@ -254,7 +265,7 @@ def get_raw_recent(bancada_id=None, horas=24):
     query = f"""
         SELECT *
         FROM sensor_raw
-        WHERE dth_recebido >= ?{filtro_bancada}
+        WHERE dth_recebido >= ?{filtro_since}{filtro_bancada}
         ORDER BY dth_recebido ASC
     """
 
@@ -264,13 +275,24 @@ def processar_sensor(bancada_id, janela_horaria="24h", horas=24):
     logger.debug("processar_sensor(bancada_id, janela_horaria='24h', horas=24)")
     from .bancada import get_limites_bancada
     from .cultura import valor_cultura
-    
+
+    ultimo_proc = get_sensor_proc_ultimo(bancada_id)
+    since = None if not ultimo_proc else ultimo_proc.get("dth_calculado")
+
     conn = conectar_db()
     try:
         cursor = conn.cursor()
-        df = get_raw_recent(bancada_id=bancada_id, horas=horas)
+        df = get_raw_recent(bancada_id=bancada_id, horas=horas, since=since)
 
-        if df.empty:
+        if df is None:
+            return None
+
+        if isinstance(df, list):
+            if not df:
+                logger.info("Nenhum dado novo para processar; ignorando reprocessamento.")
+                return None
+        elif hasattr(df, "empty") and df.empty:
+            logger.info("Nenhum dado novo para processar; ignorando reprocessamento.")
             return None
 
         cultura = valor_cultura(cursor, bancada_id)

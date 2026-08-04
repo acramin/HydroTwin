@@ -46,11 +46,47 @@ COR_ZONA_CRITICO = "#f8d7da"
 
 
 # --- CARREGAMENTO DE DADOS ---
+def _resultado_tendencia_a_partir_do_proc(proc: dict[str, Any] | None) -> dict[str, Any]:
+    """Cria uma versão leve do resultado de tendência a partir do último processamento persistido."""
+    logger.debug("_resultado_tendencia_a_partir_do_proc(proc: dict[str, Any] | None) -> dict[str, Any]")
+    if proc is None:
+        return {
+            "status": "Sem dados",
+            "score": 0.0,
+            "resumo": "Sem dados suficientes para prever o comportamento.",
+            "total_previsoes": 0,
+            "previsoes": [],
+        }
+
+    return {
+        "status": proc.get("tendencia_status") or "Sem previsão",
+        "score": float(proc.get("tendencia_score") or 0.0),
+        "resumo": "Tendência operacional já calculada no backend.",
+        "total_previsoes": 0,
+        "previsoes": [],
+    }
+
+
+def _resultado_anomalias_a_partir_do_proc(proc: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Cria uma versão leve do resultado de anomalias a partir do último processamento persistido."""
+    logger.debug("_resultado_anomalias_a_partir_do_proc(proc: dict[str, Any] | None) -> dict[str, Any] | None")
+    if proc is None:
+        return None
+
+    return {
+        "status": proc.get("anomalia_status") or "Sem dados",
+        "score": float(proc.get("anomalia_score") or 0.0),
+        "total_anomalias": 0,
+        "anomalias": [],
+    }
+
+
 @st.cache_data(ttl=60)
 def carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> dict[str, Any]:
     """Carrega e processa os dados de monitoramento da bancada.
-    
-    Utiliza cache de 60 segundos para otimizar re-execuções no Streamlit.
+
+    Utiliza cache de 60 segundos para otimizar re-execuções no Streamlit e evita recalcular
+    o mesmo resultado quando o backend já persistiu o último processamento.
     """
     logger.debug("carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> dict[str, Any]")
     df = get_raw_recent(bancada_id=bancada_id, horas=horas)
@@ -65,28 +101,35 @@ def carregar_monitoramento_bancada(bancada_id: int | str, horas: int = 24) -> di
         df = df.dropna(subset=["dth_recebido"]).sort_values("dth_recebido")
 
     limites = get_limites_bancada(bancada_id)
-    #logger.debug(f"limites: {limites}")
     limites['luminosidade'] = limites.pop('lux')
-    #logger.debug(f"limites atualizado: {limites}")
-    resultado_tendencia = analisar_tendencias(df)
-    
-    # Tratamento defensivo no dicionário de tendências
-    resultado_tendencia = {
-        "status": resultado_tendencia.get("status", "Sem dados"),
-        "score": resultado_tendencia.get("score", 0.0),
-        "resumo": resultado_tendencia.get(
-            "resumo",
-            (resultado_tendencia.get("tendencias") or [{}])[0].get(
-                "mensagem", "Sem dados suficientes para prever o comportamento."
+
+    deve_recalcular = True
+    if proc:
+        dth_recebido = df["dth_recebido"].max() if not df.empty else pd.NaT
+        dth_proc = pd.to_datetime(proc.get("dth_calculado"), errors="coerce")
+        if pd.notna(dth_recebido) and pd.notna(dth_proc) and dth_recebido <= dth_proc:
+            deve_recalcular = False
+
+    if deve_recalcular:
+        resultado_tendencia = analisar_tendencias(df)
+        resultado_tendencia = {
+            "status": resultado_tendencia.get("status", "Sem dados"),
+            "score": resultado_tendencia.get("score", 0.0),
+            "resumo": resultado_tendencia.get(
+                "resumo",
+                (resultado_tendencia.get("tendencias") or [{}])[0].get(
+                    "mensagem", "Sem dados suficientes para prever o comportamento."
+                ),
             ),
-        ),
-        "total_previsoes": resultado_tendencia.get(
-            "total_tendencias", len(resultado_tendencia.get("tendencias", []))
-        ),
-        "previsoes": resultado_tendencia.get("tendencias", []),
-    }
-    
-    resultado_anomalias = detectar_anomalias(df) if not df.empty else None
+            "total_previsoes": resultado_tendencia.get(
+                "total_tendencias", len(resultado_tendencia.get("tendencias", []))
+            ),
+            "previsoes": resultado_tendencia.get("tendencias", []),
+        }
+        resultado_anomalias = detectar_anomalias(df) if not df.empty else None
+    else:
+        resultado_tendencia = _resultado_tendencia_a_partir_do_proc(proc)
+        resultado_anomalias = _resultado_anomalias_a_partir_do_proc(proc)
 
     return {
         "df": df,

@@ -17,6 +17,7 @@ PAGE_ACCESS_CONFIG = {
             "Monitoramento Detalhado",
             "FAQ",
             "Simulador",
+            "Controle de Acesso"
         ],
     },
     "viewer": {

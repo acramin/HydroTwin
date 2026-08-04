@@ -66,6 +66,8 @@ monitoramento_detalhado = st.Page(
 )
 simulador = st.Page("app/pages/6_🕹️_Simulador.py", title="Simulador")
 
+acessos = st.Page("app/pages/7_🪪_Controle_de_Acesso.py", title="Controle de Acesso")
+
 usuario = get_current_user()
 
 # --- CONSTRUÇÃO DO MENU NAVEGÁVEL (AGRUPADO) ---
@@ -96,6 +98,8 @@ else:
     secao_gestao = []
     if "Painel de Controle - Bancadas" in allowed_pages:
         secao_gestao.append(controle_bancadas)
+    if "Controle de Acesso" in allowed_pages:
+        secao_gestao.append(acessos)
 
     if secao_gestao:
         pages_config["⚙️ Gestão"] = secao_gestao

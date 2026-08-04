@@ -49,6 +49,11 @@ def _verify_password(password, password_hash):
     )
     return hmac.compare_digest(candidate_hash, expected_hash)
 
+def _generate_access_code():
+    """Gera um código de acesso aleatório de 5 caracteres alfanuméricos."""
+    logger.debug("_generate_access_code()")
+    return secrets.token_urlsafe(4)[:5]
+
 ### Principais ###
 def ensure_default_admin():
     logger.debug("ensure_default_admin()")
@@ -84,25 +89,93 @@ def ensure_default_admin():
     finally:
         conn.close()
         
-def criar_usuario(username, password, role="viewer"):
-    logger.debug("criar_usuario(username, password, role='viewer')")
+def criar_usuario(email, role="viewer"):
+    logger.debug("criar_usuario(email, role='viewer')")
     USER_ROLES = ("admin", "viewer")
 
     if role not in USER_ROLES:
         raise ValueError("Role inválida.")
+
+    code = _generate_access_code()
 
     conn = conectar_db()
     try:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO usuario (username, password_hash, role)
+            INSERT INTO usuario (role, code, email)
             VALUES (?, ?, ?)
             """,
-            (username.strip(), _hash_password(password), role),
+            (role, code, email),
         )
         conn.commit()
         return cursor.lastrowid
+    finally:
+        conn.close()
+
+def update_usuario(email, username, password, code=None):
+    logger.debug("update_usuario(email, username, password, code=None)")
+    
+    access_code = get_access_code(email)
+    
+    if code != access_code:
+            raise ValueError("Permissão negada. Insira um código de acesso válido.")
+    
+    conn = conectar_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE usuario
+            SET username = ?, password_hash = ?
+            WHERE email = ?
+            """,
+            (username.strip(), _hash_password(password), email),
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+def get_access_code(email):
+    conn = conectar_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT code
+            FROM usuario
+            WHERE email = ?
+            """,
+            (email,),
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
+    finally:
+        conn.close()
+
+def obter_todos_usuarios():
+    logger.debug("obter_todos_usuarios()")
+    conn = conectar_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, username, role, code, email
+            FROM usuario
+            """
+        )
+        linhas = cursor.fetchall()
+        return [
+            {
+                "id": linha[0],
+                "username": linha[1],
+                "role": linha[2],
+                "code": linha[3],
+                "email": linha[4],
+            }
+            for linha in linhas
+        ]
     finally:
         conn.close()
 

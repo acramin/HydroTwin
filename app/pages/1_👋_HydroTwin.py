@@ -4,9 +4,11 @@ import streamlit as st
 from hydrotwin import (
     autenticar_usuario,
     bootstrap_auth,
-    criar_usuario,
     get_current_user,
     set_current_user,
+    obter_todos_usuarios,
+    get_access_code,
+    update_usuario,
     logger
 )
 
@@ -63,7 +65,9 @@ if usuario is None:
             # --- TAB CADASTRO ---
             with tab_cadastro:
                 with st.form("register_form", clear_on_submit=True):
-                    novo_username = st.text_input("Novo Usuário", placeholder="ex: joao.silva")
+                    code_acesso = st.text_input("Código de Acesso", placeholder='ex: abc45')
+                    email = st.text_input("E-mail de Cadastro", placeholder="ex: joao.silva@exemplo.com")
+                    novo_username = st.text_input("Nome de Usuário", placeholder="ex: joao.silva")
                     nova_senha = st.text_input("Senha", type="password")
                     confirmar_senha = st.text_input("Confirmar Senha", type="password")
                     btn_cadastro = st.form_submit_button(
@@ -81,9 +85,17 @@ if usuario is None:
                         st.warning("⚠️ A senha deve ter pelo menos 6 caracteres.")
                     elif nova_senha != confirmar_senha:
                         st.warning("⚠️ As senhas não coincidem.")
+                    elif not code_acesso:
+                        st.warning("⚠️ Informe um código de acesso.")
+                    elif code_acesso != get_access_code(email):
+                        st.warning("⚠️ Código de acesso inválido.")
+                    elif not email:
+                        st.warning("⚠️ Informe o e-mail do novo usuário.")
+                    elif email not in [usuario["email"] for usuario in obter_todos_usuarios()]:
+                        st.warning("⚠️ Este e-mail não tem permissão de cadastrado.")
                     else:
                         try:
-                            criar_usuario(username_normalizado, nova_senha, role="viewer")
+                            update_usuario(email, username_normalizado, nova_senha, code=code_acesso)
                             usuario_auth = autenticar_usuario(username_normalizado, nova_senha)
                             set_current_user(usuario_auth)
                             st.success("✅ Conta criada com sucesso! Redirecionando...")

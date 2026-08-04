@@ -29,10 +29,10 @@ __all__ = [
     'logout_user',
     'set_current_user',
     'get_current_user',
-    'bootstrap_auth'
+    'bootstrap_auth',
     
     ### DB
-    'conectar_db'
+    'conectar_db',
     'autenticar_usuario',
     'criar_usuario',
     'get_culturas',

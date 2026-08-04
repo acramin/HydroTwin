@@ -51,6 +51,9 @@ __all__ = [
     'contar_controladores',
     'atualizar_bancadas_controlador',
     'get_controladores',
+    'obter_todos_usuarios',
+    'get_access_code',
+    'update_usuario',
     
     ### Tools
     'gerar_telemetria_tupla'

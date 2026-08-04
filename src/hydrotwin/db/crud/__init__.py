@@ -1,6 +1,9 @@
 from .usuario import (
     criar_usuario,
-    autenticar_usuario
+    autenticar_usuario,
+    obter_todos_usuarios,
+    get_access_code,
+    update_usuario
 )
 
 from .cultura import get_culturas
@@ -52,5 +55,8 @@ __all__ = [
     'criar_controlador',
     'obter_controladores_com_vagas',
     'associar_bancada_ao_controlador',
-    'get_controladores'
+    'get_controladores',
+    'obter_todos_usuarios',
+    'get_access_code',
+    'update_usuario'
 ]

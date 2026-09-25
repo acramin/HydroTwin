@@ -3,13 +3,11 @@ from __future__ import annotations
 import streamlit as st
 from hydrotwin import (
     autenticar_usuario,
-    bootstrap_auth,
+    finalizar_cadastro,
     get_current_user,
+    logger,
     set_current_user,
-    obter_todos_usuarios,
-    get_access_code,
-    update_usuario,
-    logger
+    logout_user,
 )
 
 logger.debug("1_👋_HydroTwin.py")
@@ -22,7 +20,6 @@ st.set_page_config(
 )
 
 # Bootstrap do sistema de autenticação
-bootstrap_auth()
 usuario = get_current_user()
 
 # ==========================================
@@ -37,7 +34,7 @@ if usuario is None:
     with col_center:
         with st.container(border=True):
             st.subheader("🔐 Acesse a Plataforma")
-            st.caption("Faça login ou crie sua conta para acessar o painel de controle.")
+            st.caption("Faça login ou ative sua conta com um código de convite.")
 
             tab_login, tab_cadastro = st.tabs(["🔑 Entrar", "✍️ Criar Conta"])
 
@@ -65,19 +62,22 @@ if usuario is None:
             # --- TAB CADASTRO ---
             with tab_cadastro:
                 with st.form("register_form", clear_on_submit=True):
-                    code_acesso = st.text_input("Código de Acesso", placeholder='ex: abc45')
-                    email = st.text_input("E-mail de Cadastro", placeholder="ex: joao.silva@exemplo.com")
-                    novo_username = st.text_input("Nome de Usuário", placeholder="ex: joao.silva")
-                    nova_senha = st.text_input("Senha", type="password")
-                    confirmar_senha = st.text_input("Confirmar Senha", type="password")
+                    code_acesso = st.text_input("Código de Convite *", placeholder='ex: abc45')
+                    novo_username = st.text_input("Escolha seu Nome de Usuário *", placeholder="ex: joao.silva")
+                    nova_senha = st.text_input("Senha *", type="password")
+                    confirmar_senha = st.text_input("Confirmar Senha *", type="password")
+                    
                     btn_cadastro = st.form_submit_button(
                         "Criar Conta", width='stretch'
                     )
 
                 if btn_cadastro:
                     username_normalizado = novo_username.strip()
+                    code_normalizado = code_acesso.strip()
 
-                    if not username_normalizado:
+                    if not code_normalizado:
+                        st.warning("⚠️ Informe o código de convite que você recebeu.")
+                    elif not username_normalizado:
                         st.warning("⚠️ Informe um nome de usuário.")
                     elif username_normalizado.lower() == "admin":
                         st.warning("⚠️ O nome de usuário 'admin' é reservado.")
@@ -85,21 +85,22 @@ if usuario is None:
                         st.warning("⚠️ A senha deve ter pelo menos 6 caracteres.")
                     elif nova_senha != confirmar_senha:
                         st.warning("⚠️ As senhas não coincidem.")
-                    elif not code_acesso:
-                        st.warning("⚠️ Informe um código de acesso.")
-                    elif code_acesso != get_access_code(email):
-                        st.warning("⚠️ Código de acesso inválido.")
-                    elif not email:
-                        st.warning("⚠️ Informe o e-mail do novo usuário.")
-                    elif email not in [usuario["email"] for usuario in obter_todos_usuarios()]:
-                        st.warning("⚠️ Este e-mail não tem permissão de cadastrado.")
                     else:
                         try:
-                            update_usuario(email, username_normalizado, nova_senha, code=code_acesso)
+                            # Converte o convite em usuário ativo
+                            finalizar_cadastro(
+                                code=code_normalizado, 
+                                username=username_normalizado, 
+                                password=nova_senha
+                            )
+                            
+                            # Autentica e realiza login automaticamente
                             usuario_auth = autenticar_usuario(username_normalizado, nova_senha)
                             set_current_user(usuario_auth)
-                            st.success("✅ Conta criada com sucesso! Redirecionando...")
+                            st.success("✅ Conta criada com sucesso! Entrando...")
                             st.rerun()
+                        except ValueError as ve:
+                            st.warning(f"⚠️ {ve}")
                         except Exception as e:
                             st.error(f"❌ Erro ao criar conta: {e}")
 
@@ -114,7 +115,7 @@ else:
             )
         with col_u2:
             if st.button("🚪 Sair / Logout", width='stretch'):
-                set_current_user(None)
+                logout_user()
                 st.rerun()
 
 st.divider()

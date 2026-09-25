@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from hydrotwin import (
-    criar_usuario,
+    criar_convite,
     get_current_user,
     logger,
     obter_todos_usuarios,
@@ -38,7 +38,7 @@ st.divider()
 
 # Organização por Abas
 tab_listar, tab_cadastrar = st.tabs(
-    ["📋 Usuários Cadastrados", "➕ Novo Usuário"]
+    ["📋 Usuários Cadastrados", "➕ Novo Convite"]
 )
 
 # ==========================================
@@ -48,7 +48,7 @@ with tab_listar:
     usuarios = obter_todos_usuarios() or []
 
     if not usuarios:
-        st.info("ℹ️ Nenhum usuário encontrado no sistema.")
+        st.info("ℹ️ Nenhum usuário cadastrado no sistema.")
     else:
         # --- 📊 Métricas Rápidas ---
         total_usuarios = len(usuarios)
@@ -66,7 +66,7 @@ with tab_listar:
         col_busca, col_filtro_role = st.columns([3, 1])
         with col_busca:
             termo_busca = st.text_input(
-                "🔎 Buscar por e-mail",
+                "🔎 Buscar por e-mail ou nome",
                 placeholder="Digite para filtrar...",
                 label_visibility="collapsed",
             )
@@ -80,8 +80,10 @@ with tab_listar:
         # Filtragem dos dados
         usuarios_filtrados = usuarios
         if termo_busca:
+            termo = termo_busca.lower()
             usuarios_filtrados = [
-                u for u in usuarios_filtrados if termo_busca.lower() in u.get("email", "").lower()
+                u for u in usuarios_filtrados 
+                if termo in u.get("email", "").lower() or termo in u.get("username", "").lower()
             ]
         if filtro_role != "Todos":
             usuarios_filtrados = [
@@ -94,12 +96,11 @@ with tab_listar:
             
             # Renomear colunas para exibição amigável
             colunas_map = {
+                "username": "Nome de Usuário",
                 "email": "E-mail",
                 "role": "Função (Role)",
-                "code": "Código de Acesso",
             }
             
-            # Seleciona e renomeia apenas as colunas existentes
             cols_presentes = [c for c in colunas_map.keys() if c in df_usuarios.columns]
             df_display = df_usuarios[cols_presentes].rename(columns=colunas_map)
 
@@ -108,9 +109,9 @@ with tab_listar:
                 width='stretch',
                 hide_index=True,
                 column_config={
+                    "Nome de Usuário": st.column_config.TextColumn("Nome de Usuário", width="medium"),
                     "E-mail": st.column_config.TextColumn("E-mail", width="large"),
                     "Função (Role)": st.column_config.TextColumn("Função", width="medium"),
-                    "Código de Acesso": st.column_config.TextColumn("Código de Acesso", width="medium"),
                 },
             )
         else:
@@ -118,16 +119,16 @@ with tab_listar:
 
 
 # ==========================================
-# TAB 2: CADASTRO DE NOVO USUÁRIO
+# TAB 2: CADASTRO DE NOVO CONVITE
 # ==========================================
 with tab_cadastrar:
     if "sucesso_cadastro" in st.session_state:
         msg = st.session_state.pop("sucesso_cadastro")
         st.success(msg)
-        st.toast(f"Convite enviado com sucesso!", icon="🎉")
+        st.toast("Convite enviado com sucesso!", icon="🎉")
             
-    st.subheader("➕ Cadastrar Novo Usuário")
-    st.caption("Crie um novo acesso e envie o código de liberação para o e-mail informado.")
+    st.subheader("➕ Enviar Novo Convite")
+    st.caption("Gere um convite temporário e envie o código de liberação para o e-mail informado.")
 
     col_form, col_info = st.columns([2, 1], gap="large")
 
@@ -135,7 +136,7 @@ with tab_cadastrar:
         with st.container(border=True):
             with st.form("register_form", clear_on_submit=True):
                 email = st.text_input(
-                    "E-mail do Novo Usuário *",
+                    "E-mail do Destinatário *",
                     placeholder="ex: joao.silva@exemplo.com",
                     help="O código de primeiro acesso será gerado para este e-mail.",
                 )
@@ -149,7 +150,7 @@ with tab_cadastrar:
 
                 st.markdown("---")
                 btn_cadastro = st.form_submit_button(
-                    "📧 Cadastrar e Enviar Convite",
+                    "📧 Gerar e Enviar Convite",
                     type="primary",
                     width='stretch',
                 )
@@ -159,15 +160,16 @@ with tab_cadastrar:
                 st.warning("⚠️ Por favor, informe um endereço de e-mail válido.")
             else:
                 try:
-                    with st.spinner("Gerando acesso e enviando e-mail..."):
-                        criar_usuario(email, role=role)
+                    with st.spinner("Gerando código de convite e enviando e-mail..."):
+                        criar_convite(email, role=role)
                     
-                    st.session_state["sucesso_cadastro"] = f"✅ Usuário `{email}` cadastrado com sucesso!"
-                    
+                    st.session_state["sucesso_cadastro"] = f"✅ Convite para `{email}` gerado e enviado com sucesso!"
                     st.rerun()
 
+                except ValueError as ve:
+                    st.warning(f"⚠️ {ve}")
                 except Exception as e:
-                    st.error(f"❌ Erro ao cadastrar usuário `{email}`: {e}")
+                    st.error(f"❌ Erro ao gerar convite para `{email}`: {e}")
 
     # --- Card de Informações sobre Permissões ---
     with col_info:

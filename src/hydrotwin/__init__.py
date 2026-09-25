@@ -34,7 +34,6 @@ __all__ = [
     ### DB
     'conectar_db',
     'autenticar_usuario',
-    'criar_usuario',
     'get_culturas',
     'get_filetes_by_bancada',
     'inserir_bancada',
@@ -52,8 +51,9 @@ __all__ = [
     'atualizar_bancadas_controlador',
     'get_controladores',
     'obter_todos_usuarios',
-    'get_access_code',
-    'update_usuario',
+    'criar_convite',
+    'obter_convite_valido',
+    'finalizar_cadastro',
     
     ### Tools
     'gerar_telemetria_tupla'

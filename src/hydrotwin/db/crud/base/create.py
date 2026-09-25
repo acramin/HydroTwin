@@ -123,13 +123,34 @@ def create_tables():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuario (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE DEFAULT 'user',
-        password_hash TEXT NOT NULL DEFAULT 'default_hash',
-        role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'viewer')),
-        code TEXT NOT NULL DEFAULT 'CAD07',
-        email TEXT NOT NULL UNIQUE DEFAULT 'default@email.com',
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        role TEXT NOT NULL CHECK (role IN ('admin', 'viewer')),
         created_at DATETIME DEFAULT (datetime('now', '-3 hours'))
     );
+    """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS convite (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'viewer')),
+        status TEXT NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente', 'usado', 'cancelado')),
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT (datetime('now', '-3 hours'))
+    );
+    """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sessao_usuario (
+        token TEXT PRIMARY KEY,
+        usuario_id INTEGER NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT (datetime('now', '-3 hours')),
+        FOREIGN KEY (usuario_id) REFERENCES usuario (id) ON DELETE CASCADE
+    );               
     """)
     
     cursor.execute("""

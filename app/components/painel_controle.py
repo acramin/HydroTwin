@@ -37,7 +37,7 @@ def renderizar_bancada(bancada):
         # Botão em Popover para Adicionar Filete
         with col_actions:
             if not flag_concluido:
-                with st.popover("➕ Novo Filete", use_container_width=True):
+                with st.popover("➕ Novo Filete", width='stretch'):
                     st.markdown(f"**Adicionar Filete na bancada: {nome_bancada}**")
                     culturas = get_culturas() or []
                     cultura_dict = {c[1]: c[0] for c in culturas}
@@ -116,7 +116,7 @@ def renderizar_bancada(bancada):
                             if st.button(
                                 "🌾 Marcar Colhido",
                                 key=f"btn_colher_{f_id}",
-                                use_container_width=True,
+                                width='stretch',
                             ):
                                 update_filete_colhido(f_id, 1)
 

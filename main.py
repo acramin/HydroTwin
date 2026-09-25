@@ -119,7 +119,7 @@ if usuario is not None:
         with col1:
             st.caption(f"👤 {usuario['username']} ({usuario['role']})")
         with col2:
-            if st.button("🚪 Sair", use_container_width=True):
+            if st.button("🚪 Sair", width='stretch'):
                 logout_user()
                 st.rerun()
 

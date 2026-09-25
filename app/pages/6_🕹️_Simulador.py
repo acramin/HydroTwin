@@ -112,7 +112,7 @@ with col_config:
             btn_iniciar = st.button(
                 "🚀 Iniciar",
                 type="primary",
-                use_container_width=True,
+                width='stretch',
                 disabled=st.session_state.simulando,
             )
 
@@ -120,7 +120,7 @@ with col_config:
             btn_cancelar = st.button(
                 "🛑 Cancelar",
                 type="secondary",
-                use_container_width=True,
+                width='stretch',
                 disabled=not st.session_state.simulando,
             )
 

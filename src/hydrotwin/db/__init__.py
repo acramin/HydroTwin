@@ -2,7 +2,6 @@ from .conn import conectar_db
 
 from .crud import (
     autenticar_usuario,
-    criar_usuario,
     get_culturas,
     get_filetes_by_bancada,
     inserir_bancada,
@@ -20,14 +19,14 @@ from .crud import (
     associar_bancada_ao_controlador,
     get_controladores,
     obter_todos_usuarios,
-    get_access_code,
-    update_usuario
+    criar_convite,
+    obter_convite_valido,
+    finalizar_cadastro,
 )
 
 __all__ = [
     'conectar_db',
     'autenticar_usuario',
-    'criar_usuario',
     'get_culturas',
     'get_filetes_by_bancada',
     'inserir_bancada',
@@ -45,6 +44,7 @@ __all__ = [
     'associar_bancada_ao_controlador',
     'get_controladores',
     'obter_todos_usuarios',
-    'get_access_code',
-    'update_usuario'
+    'criar_convite',
+    'obter_convite_valido',
+    'finalizar_cadastro',
 ]

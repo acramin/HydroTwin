@@ -182,7 +182,7 @@ with tab_cadastrar:
             col_sub, _ = st.columns([1, 2])
             with col_sub:
                 submitted = st.form_submit_button(
-                    "💾 Cadastrar Bancada", use_container_width=True, type="primary"
+                    "💾 Cadastrar Bancada", width='stretch', type="primary"
                 )
 
         # Processamento após envio

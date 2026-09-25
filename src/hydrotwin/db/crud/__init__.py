@@ -1,9 +1,9 @@
 from .usuario import (
-    criar_usuario,
     autenticar_usuario,
     obter_todos_usuarios,
-    get_access_code,
-    update_usuario
+    criar_convite,
+    obter_convite_valido,
+    finalizar_cadastro,
 )
 
 from .cultura import get_culturas
@@ -39,7 +39,6 @@ from .controlador import (
 
 __all__ = [
     'autenticar_usuario',
-    'criar_usuario',
     'get_culturas',
     'get_filetes_by_bancada',
     'inserir_bancada',
@@ -57,6 +56,7 @@ __all__ = [
     'associar_bancada_ao_controlador',
     'get_controladores',
     'obter_todos_usuarios',
-    'get_access_code',
-    'update_usuario'
+    'criar_convite',
+    'obter_convite_valido',
+    'finalizar_cadastro',
 ]

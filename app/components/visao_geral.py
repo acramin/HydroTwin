@@ -43,6 +43,8 @@ def get_kpis(bancada_id: int | str) -> dict[str, Any]:
     logger.debug("get_kpis(bancada_id: int | str) -> dict[str, Any]")
     df = get_raw_recent(bancada_id)
     
+    leitura = None
+    
     if df is None:
         df = pd.DataFrame()
         
@@ -52,6 +54,18 @@ def get_kpis(bancada_id: int | str) -> dict[str, Any]:
         df = df.dropna(subset=["dth_recebido"]).sort_values("dth_recebido")
         leitura = df.loc[df.index[-1]]
         #logger.debug(f"{leitura.ph}")
+    
+    if df.empty or leitura is None:
+        logger.debug("Nenhuma leitura recente encontrada para a bancada.")
+        return {
+            "nivel_tanque": "Sem dados",
+            "ph": "Sem dados",
+            "ec": "Sem dados",
+            "umidade": "Sem dados",
+            "temperatura_ambiente": "Sem dados",
+            "temperatura_agua": "Sem dados",
+            "luminosidade": "Sem dados",
+        }
     
     nivel_atual = leitura.nivel_tanque
     status_tanque = "Normal" if (nivel_atual is not None and nivel_atual == 0 ) else "Abaixo"

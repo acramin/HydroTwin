@@ -32,7 +32,7 @@ require_page_access(usuario_logado, "Controle de Acesso")
 
 # Cabeçalho da Página
 st.title("🪪 Controle de Acesso")
-st.caption("Gerencie os usuários do sistema, permissões de acesso e novos convites.")
+st.caption("Consulte quem tem acesso ao HydroTwin e envie convites para novas pessoas entrarem na plataforma.")
 
 st.divider()
 
@@ -66,14 +66,15 @@ with tab_listar:
         col_busca, col_filtro_role = st.columns([3, 1])
         with col_busca:
             termo_busca = st.text_input(
-                "🔎 Buscar por e-mail ou nome",
+                "🔎 Buscar usuário por e-mail ou nome",
                 placeholder="Digite para filtrar...",
                 label_visibility="collapsed",
             )
         with col_filtro_role:
             filtro_role = st.selectbox(
-                "Filtrar por Função",
+                "Filtrar por perfil de acesso",
                 options=["Todos", "admin", "viewer"],
+                format_func=lambda x: {"Todos": "Todos os perfis", "admin": "Administrador", "viewer": "Visualizador"}[x],
                 label_visibility="collapsed",
             )
 
@@ -98,11 +99,15 @@ with tab_listar:
             colunas_map = {
                 "username": "Nome de Usuário",
                 "email": "E-mail",
-                "role": "Função (Role)",
+                "role": "Perfil de Acesso",
             }
             
             cols_presentes = [c for c in colunas_map.keys() if c in df_usuarios.columns]
             df_display = df_usuarios[cols_presentes].rename(columns=colunas_map)
+            if "Perfil de Acesso" in df_display.columns:
+                df_display["Perfil de Acesso"] = df_display["Perfil de Acesso"].map(
+                    {"admin": "Administrador", "viewer": "Visualizador"}
+                ).fillna(df_display["Perfil de Acesso"])
 
             st.dataframe(
                 df_display,
@@ -111,7 +116,7 @@ with tab_listar:
                 column_config={
                     "Nome de Usuário": st.column_config.TextColumn("Nome de Usuário", width="medium"),
                     "E-mail": st.column_config.TextColumn("E-mail", width="large"),
-                    "Função (Role)": st.column_config.TextColumn("Função", width="medium"),
+                    "Perfil de Acesso": st.column_config.TextColumn("Perfil de Acesso", width="medium"),
                 },
             )
         else:
@@ -127,8 +132,8 @@ with tab_cadastrar:
         st.success(msg)
         st.toast("Convite enviado com sucesso!", icon="🎉")
             
-    st.subheader("➕ Enviar Novo Convite")
-    st.caption("Gere um convite temporário e envie o código de liberação para o e-mail informado.")
+    st.subheader("➕ Convidar uma pessoa")
+    st.caption("Informe o e-mail e o perfil desejado. A pessoa receberá um convite para criar a própria conta.")
 
     col_form, col_info = st.columns([2, 1], gap="large")
 
@@ -138,7 +143,7 @@ with tab_cadastrar:
                 email = st.text_input(
                     "E-mail do Destinatário *",
                     placeholder="ex: joao.silva@exemplo.com",
-                    help="O código de primeiro acesso será gerado para este e-mail.",
+                    help="O convite será associado a este endereço de e-mail.",
                 )
                 
                 role = st.selectbox(
@@ -169,7 +174,7 @@ with tab_cadastrar:
                 except ValueError as ve:
                     st.warning(f"⚠️ {ve}")
                 except Exception as e:
-                    st.error(f"❌ Erro ao gerar convite para `{email}`: {e}")
+                    st.error("❌ Não foi possível enviar o convite. Confira as configurações de e-mail e tente novamente.")
 
     # --- Card de Informações sobre Permissões ---
     with col_info:
@@ -177,12 +182,12 @@ with tab_cadastrar:
             st.markdown("### ℹ️ Sobre as Funções")
             st.markdown(
                 """
-                **👁️ Viewer (Visualizador)**
-                * Acesso de leitura aos Dashboards e Monitoramento.
-                * Sem permissão para alterar configurações ou cadastrar dados.
+                **👁️ Visualizador (`viewer`)**
+                * Pode consultar as telas de acompanhamento, gráficos e alertas.
+                * Não pode realizar ações administrativas.
 
-                **👑 Admin (Administrador)**
-                * Acesso total a todas as telas do sistema.
-                * Permissão para gerenciar bancadas, simulador e novos usuários.
+                **👑 Administrador (`admin`)**
+                * Pode gerenciar bancadas, filetes, convites e usuários.
+                * O simulador só fica disponível em ambiente de desenvolvimento.
                 """
             )

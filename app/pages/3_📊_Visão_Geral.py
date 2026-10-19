@@ -41,7 +41,7 @@ if not status_bancadas:
         st.info("Aguarde até que o administrador cadastre uma bancada para acessar a visão geral.")
     st.stop()
 
-st.caption("Status operacional em tempo real, indicadores rápidos e alertas do sistema.")
+st.caption("Confira o estado mais recente de cada bancada, os valores dos sensores e os alertas que ainda precisam de atenção.")
 
 # ==========================================
 # 🟢 1. Status das Bancadas
@@ -70,7 +70,7 @@ for idx, nome_bancada in enumerate(bancadas_ordenadas):
     with cols_status[idx % len(cols_status)]:
         with st.container(border=True):
             st.metric(nome_bancada.capitalize(), f"{emoji} {status_txt}")
-            st.caption(f"Atualizado: {atualizado_em}")
+            st.caption(f"Última atualização: {atualizado_em}")
 
 st.divider()
 
@@ -104,8 +104,7 @@ for bancada in sorted(bancadas_cadastradas, key=lambda x: x[1]):
 
         if not kpis:
             st.info(
-                f"Nenhum KPI calculado ainda para a bancada **{nome}**. "
-                "Assim que as próximas leituras brutas entrarem, os cálculos serão gerados automaticamente."
+                f"Ainda não há indicadores disponíveis para a bancada **{nome}**. Confira se o controlador está enviando leituras e aguarde o próximo processamento."
             )
         else:
             cols_kpi = st.columns(min(4, len(kpis)))
@@ -131,7 +130,7 @@ st.subheader("Alertas Ativos")
 alertas = get_alertas()
 
 if not alertas:
-    st.success("🟢 Nenhum alerta ativo no momento!")
+    st.success("🟢 Não há alertas ativos registrados neste momento. Continue acompanhando as leituras da bancada.")
 else:
     for alerta in alertas:
         texto = alerta.get("texto_formatado", alerta.get("mensagem", ""))

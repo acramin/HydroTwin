@@ -70,30 +70,30 @@ with st.container(border=True):
         c_status.metric(
             "Status Consolidado",
             status_consolidado,
-            help="Classificação unificada para evitar conflito entre risco, anomalia e tendência."
+            help="Resumo do estado calculado para a bancada com base nas regras operacionais do sistema."
         )
         c_score_cons.metric(
-            "Score Consolidado",
+            "Índice de Atenção",
             f'{(score_consolidado if score_consolidado is not None else proc["score"]):.1f}',
-            help="Score consolidado (0-100): maior severidade observada entre risco atual, anomalia e tendência operacional."
+            help="Indicador de severidade de 0 a 100. Valores maiores representam uma condição que merece mais atenção."
         )
         c_score_risco.metric(
-            "Score de Risco",
+            "Índice de Risco",
             f'{proc["score"]:.1f}',
-            help="Score de risco estatístico da janela processada."
+            help="Indica o nível de risco calculado a partir das leituras analisadas nesta janela."
         )
-        st.caption(f"**Motivo:** {motivo_consolidado}")
-        st.caption(f' Janela: {proc["janela_horaria"]} | Amostras: {proc["n_amostras"]} | Atualizado em: {formatar_data(proc["dth_calculado"])}')
+        st.caption(f"**Por que este status?** {motivo_consolidado}")
+        st.caption(f'Período analisado: {proc["janela_horaria"]} · Leituras consideradas: {proc["n_amostras"]} · Calculado em: {formatar_data(proc["dth_calculado"])}')
     else:
         c1, c2, c3 = st.columns(3)
         c1.metric("Status Consolidado", "Sem dados")
-        c2.metric("Score Consolidado", "-")
-        c3.metric("Score de Risco", "-")
-        st.info("Ainda não há agregação para esta bancada. Assim que a próxima leitura bruta entrar, o cálculo será gerado automaticamente.")
+        c2.metric("Índice de Atenção", "-")
+        c3.metric("Índice de Risco", "-")
+        st.info("Ainda não há um resumo calculado para esta bancada. Confira se há leituras recentes e aguarde o próximo processamento.")
         st.stop()
 
 if df.empty:
-    st.warning("Sem leituras brutas recentes para exibir gráficos.")
+    st.warning("Não há leituras recentes para montar os gráficos. Confira a conexão do controlador ou volte mais tarde.")
     st.stop()
 
 # ==========================================
@@ -101,7 +101,7 @@ if df.empty:
 # ==========================================
 st.subheader(
     "Gráficos por Variável Principal",
-    help="Visualize a evolução de pH e EC ao longo do tempo com zonas de atenção configuradas."
+    help="Veja como pH, EC e luminosidade variaram ao longo do tempo. No modo Zona, compare os valores com as faixas configuradas."
 )
 
 modo_visualizacao = st.radio(
@@ -137,7 +137,7 @@ for idx in range(0, len(VARIAVEIS_ZONA_FORTES), 2):
 # 🌡️ 5. Variáveis Complementares
 # ==========================================
 st.divider()
-st.subheader("Métricas de Ambiente e Reservatório")
+st.subheader("Ambiente e Reservatório")
 
 col_temp_amb, col_temp_agua = st.columns(2)
 col_umidade, col_nivel = st.columns(2)
@@ -178,7 +178,7 @@ with col_nivel:
 # 🚨 6. Detecção de Anomalias
 # ==========================================
 st.divider()
-st.subheader("Detecção de Anomalias", help="Identifique comportamentos incomuns ou violações de limites.")
+st.subheader("Detecção de Anomalias", help="Veja leituras que se afastam do comportamento recente ou dos limites considerados pelo sistema.")
 
 if not resultado_anomalias:
     st.info("Sem dados suficientes para detectar anomalias.")
@@ -190,7 +190,7 @@ else:
         col_a, col_b, col_c = st.columns(3)
         col_a.metric("Status de Anomalia", anomalia_status)
         col_b.metric(
-            "Score de Anomalia",
+            "Índice de Anomalia",
             f'{(anomalia_score if anomalia_score is not None else resultado_anomalias["score"]):.1f}'
         )
         col_c.metric("Sensores Afetados", resultado_anomalias["total_anomalias"])
@@ -205,7 +205,7 @@ else:
                 column_config={
                     "nome": st.column_config.TextColumn("Sensor", help="Nome da variável"),
                     "status": st.column_config.TextColumn("Status"),
-                    "score": st.column_config.ProgressColumn("Score Severidade", min_value=0, max_value=100, format="%.1f"),
+                    "score": st.column_config.ProgressColumn("Nível de Severidade", min_value=0, max_value=100, format="%.1f"),
                     "valor_atual": st.column_config.NumberColumn("Valor Atual", format="%.2f"),
                     "media_recente": st.column_config.NumberColumn("Média Recente", format="%.2f"),
                     "desvio_percentual": st.column_config.NumberColumn("Desvio %", format="%.1f%%"),
@@ -219,19 +219,19 @@ else:
 # 📉 7. Tendência Operacional
 # ==========================================
 st.divider()
-st.subheader("Tendência Operacional", help="Análise de direção recente dos parâmetros do sistema.")
+st.subheader("Tendência Operacional", help="Veja se os valores analisados estão aumentando, diminuindo ou permanecendo relativamente estáveis.")
 
 status_tendencia = proc.get("tendencia_status") if proc else resultado_tendencia["status"]
 score_tendencia = proc.get("tendencia_score") if proc else resultado_tendencia["score"]
 
 with st.container(border=True):
     col_t1, col_t2, col_t3 = st.columns(3)
-    col_t1.metric("Status Previsto", status_tendencia)
+    col_t1.metric("Status da Tendência", status_tendencia)
     col_t2.metric(
-        "Tendência Geral",
+        "Indicador de Tendência",
         f'{(score_tendencia if score_tendencia is not None else resultado_tendencia["score"]):.1f}'
     )
-    col_t3.metric("Sensores em Tendência", resultado_tendencia["total_previsoes"])
+    col_t3.metric("Variáveis com Tendência", resultado_tendencia["total_previsoes"])
 
     st.caption(f"**Resumo:** {resultado_tendencia['resumo']}")
 
@@ -245,7 +245,7 @@ with st.container(border=True):
             column_config={
                 "nome": st.column_config.TextColumn("Sensor"),
                 "status": st.column_config.TextColumn("Tendência"),
-                "score": st.column_config.ProgressColumn("Score Tendência", min_value=0, max_value=100, format="%.1f"),
+                "score": st.column_config.ProgressColumn("Indicador de Tendência", min_value=0, max_value=100, format="%.1f"),
                 "media_antiga": st.column_config.NumberColumn("Média Anterior", format="%.2f"),
                 "media_recente": st.column_config.NumberColumn("Média Recente", format="%.2f"),
                 "variacao_percentual": st.column_config.NumberColumn("Variação %", format="%.1f%%"),
@@ -258,7 +258,7 @@ with st.container(border=True):
 # 📑 8. Dados Brutos
 # ==========================================
 st.divider()
-with st.expander("🔍 Ver leituras brutas recentes"):
+with st.expander("🔍 Ver leituras recebidas dos sensores"):
     if df.empty:
         st.write("Sem dados para exibir")
     else:

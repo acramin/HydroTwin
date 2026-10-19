@@ -54,14 +54,14 @@ tab_listar, tab_cadastrar = st.tabs(
 with tab_listar:
     st.header(
         "Bancadas por Controlador",
-        help="Visualize e gerencie suas bancadas organizadas por cada controlador/Arduino.",
+        help="Veja quais bancadas estão vinculadas a cada controlador e acompanhe os filetes cadastrados.",
     )
 
     controladores = get_controladores() or []
     bancadas = get_bancadas() or []
 
     if not controladores:
-        st.info("Nenhum controlador cadastrado até o momento.")
+        st.info("Nenhum controlador cadastrado. Cadastre ou configure um controlador antes de vincular bancadas.")
     else:
         # Dicionário de acesso rápido às bancadas por ID
         bancada_map = {b[0]: b for b in bancadas}
@@ -97,7 +97,7 @@ with tab_listar:
         # Exibe bancadas órfãs (caso existam bancadas sem nenhum controlador vinculado)
         bancadas_orfas = [b for b in bancadas if b[0] not in bancadas_vinculadas_ids]
         if bancadas_orfas:
-            st.subheader("⚠️ Bancadas Sem Controlador Vinculado")
+            st.subheader("⚠️ Bancadas sem controlador vinculado")
             for b in bancadas_orfas:
                 renderizar_bancada(b)
 
@@ -107,7 +107,7 @@ with tab_listar:
 with tab_cadastrar:
     st.header(
         "Cadastrar Nova Bancada",
-        help="Crie uma nova bancada e defina seu primeiro filete obrigatório.",
+        help="Cadastre uma bancada, escolha o controlador responsável e informe a primeira cultura e data de plantio.",
     )
 
     # --- 1. VERIFICAÇÃO DE VAGAS EM CONTROLADORES ---
@@ -118,7 +118,7 @@ with tab_cadastrar:
             "⚠️ **Cadastro Bloqueado:** Não há controladores disponíveis ou "
             "todos os existentes já atingiram o limite máximo de 2 bancadas atreladas."
         )
-        st.info("💡 Conecte um novo controlador para desbloquear mais bancadas.")
+        st.info("💡 Cada controlador pode receber até duas bancadas. Configure outro controlador para cadastrar mais bancadas.")
     else:
         # Prepara as opções para o Selectbox
         # Monta o dicionário mostrando o nome e quantas vagas restam
@@ -133,8 +133,7 @@ with tab_cadastrar:
         opcoes_controlador = list(ctrl_dict.keys())
 
         st.info(
-            "💡 **Instruções:** Para inicializar uma bancada no HydroTwin, você deve registrar "
-            "o nome identificador, vincular a um controlador e definir o primeiro filete de cultivo."
+            "💡 **Como cadastrar:** Dê um nome à bancada, escolha o controlador que vai receber seus parâmetros e informe a cultura e a data de plantio do primeiro filete."
         )
 
         culturas = get_culturas() or []
@@ -232,7 +231,7 @@ with tab_cadastrar:
                                     if status_envio == "sucesso":
                                         limpar_status_envio(bancada_id)
                                         status_box.update(
-                                            label="✅ Sistema sincronizado com sucesso!",
+                                            label="✅ Parâmetros enviados e confirmados pelo Arduino.",
                                             state="complete",
                                         )
                                         sincronizado = True
@@ -241,7 +240,7 @@ with tab_cadastrar:
                                     if status_envio == "erro":
                                         limpar_status_envio(bancada_id)
                                         status_box.update(
-                                            label=f"❌ Erro na sincronização: {res.get('mensagem')}",
+                                            label="❌ Não foi possível enviar os parâmetros ao Arduino. Confira a conexão e tente novamente.",
                                             state="error",
                                         )
                                         sincronizado = True
@@ -252,7 +251,7 @@ with tab_cadastrar:
                                 if not sincronizado:
                                     limpar_status_envio(bancada_id)
                                     status_box.update(
-                                        label="⚠️ Tempo de resposta do sensor excedido.",
+                                        label="⚠️ Não recebemos a confirmação do Arduino dentro do tempo esperado. Confira a conexão e o estado do controlador.",
                                         state="error",
                                     )
 
@@ -260,4 +259,4 @@ with tab_cadastrar:
                         st.rerun()
 
                 except Exception as e:
-                    st.error(f"❌ Ocorreu um erro ao processar o cadastro: {e}")
+                    st.error("❌ Não foi possível concluir o cadastro. Confira os dados e tente novamente.")

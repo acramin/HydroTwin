@@ -6,178 +6,306 @@ from hydrotwin import logger
 
 logger.debug("5_❓_FAQ.py")
 
-# Configuração da Página
-st.set_page_config(page_title="Central de Ajuda - HydroTwin", layout="wide", page_icon="❓")
+st.set_page_config(
+    page_title="Central de Ajuda - HydroTwin",
+    layout="wide",
+    page_icon="❓",
+)
 
-# ==========================================
-# ❓ CABEÇALHO DA PÁGINA
-# ==========================================
-st.title("❓ Central de Ajuda & FAQ")
-st.caption("Guia rápido de uso, interpretação de status e respostas para as principais dúvidas do HydroTwin.")
+st.title("❓ Central de Ajuda — HydroTwin")
+st.caption(
+    "Entenda o monitoramento, os indicadores operacionais, a automação embarcada "
+    "e os recursos disponíveis na plataforma."
+)
 
-# Resumo do Projeto em Container
 with st.container(border=True):
     st.markdown(
         """
-        O **HydroTwin** centraliza o cadastro, o acompanhamento e a leitura operacional de bancadas hidropônicas.
-        A plataforma organiza os dados coletados pelos sensores, calcula indicadores consolidados e destaca **alertas, anomalias e tendências** para facilitar a tomada de decisão rápida no campo.
+        O **HydroTwin** é uma aplicação local para monitoramento e automação de
+        bancadas hidropônicas NFT. O Arduino Mega lê os sensores e controla alguns
+        atuadores; o Raspberry Pi recebe as leituras, armazena os dados em SQLite
+        e executa a aplicação Streamlit.
         """
     )
-
-    # Indicadores Rápidos da Plataforma
-    m1, m2, m3 = st.columns(3)
-    with m1:
-        st.metric("Páginas do Sistema", "4", help="Visão Geral, Detalhado, Painel e Ajuda")
-    with m2:
-        st.metric("Níveis de Status", "3", help="Saudável, Atenção e Crítico")
-    with m3:
-        st.metric("Profundidade de Leitura", "Resumo + Detalhado")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Armazenamento", "SQLite", "Banco local")
+    c2.metric("Análise operacional", "pH + EC", "Status consolidado")
+    c3.metric("Análises complementares", "Anomalias e tendências", "Séries de leituras")
 
 st.divider()
 
-# ==========================================
-# 📊 GUIA DE INTERPRETAÇÃO DE STATUS
-# ==========================================
-st.subheader("🟢🟡🔴 Como Interpretar os Status do Sistema")
-st.markdown("O sistema analisa os dados brutos e consolida o estado de cada bancada com base nos limites operacionais:")
-
-col_s1, col_s2, col_s3 = st.columns(3)
-
-with col_s1:
+st.subheader("🟢🟡🔴 Como interpretar o status operacional?")
+st.markdown(
+    """
+    O status operacional consolidado implementado no processamento é calculado
+    a partir das médias de **pH e EC** da janela analisada e dos limites disponíveis
+    para a bancada/cultura. Para cada variável, a faixa de atenção é derivada da
+    faixa ideal, com uma margem de 20% da amplitude entre os limites.
+    """
+)
+col1, col2, col3 = st.columns(3)
+with col1:
     st.success("**🟢 Saudável**")
-    st.caption("Todos os indicadores (pH, EC, temperatura, nível) estão dentro da faixa ideal esperada para a cultura.")
-
-with col_s2:
+    st.caption("Os valores avaliados estão dentro da faixa ideal configurada.")
+with col2:
     st.warning("**🟡 Atenção**")
-    st.caption("Um ou mais sensores começaram a se aproximar dos limites críticos. Exige acompanhamento preventivo.")
-
-with col_s3:
+    st.caption("Um valor está fora da faixa ideal, mas ainda dentro da faixa de atenção.")
+with col3:
     st.error("**🔴 Crítico**")
-    st.caption("Condição fora do padrão ou alto risco operacional detectado. Requer intervenção técnica imediata.")
+    st.caption("Um valor ultrapassou também a faixa de atenção configurada.")
 
 st.info(
-    "💡 **Status Consolidado:** Na página de monitoramento detalhado, o status combina **risco atual, anomalia e tendência**. "
-    "Isso evita ambiguidades quando um indicador parece normal, mas a tendência aponta para um problema futuro."
+    "O status consolidado atualmente representa o estado operacional baseado em pH e EC. "
+    "Anomalias e tendências são calculadas separadamente e armazenadas como indicadores "
+    "complementares; não são combinadas automaticamente ao status consolidado."
 )
 
 st.divider()
+st.subheader("📚 Perguntas frequentes")
 
-# ==========================================
-# 📚 PERGUNTAS FREQUENTES (ORGANIZADAS EM ABAS)
-# ==========================================
-st.subheader("📖 Perguntas Frequentes & Funcionalidades")
+tab_inicio, tab_dados, tab_analise, tab_controle = st.tabs(
+    [
+        "🚀 Primeiros passos",
+        "📡 Sensores e dados",
+        "📊 Indicadores e alertas",
+        "🔧 Automação e acesso",
+    ]
+)
 
-tab_passos, tab_geral, tab_detalhado, tab_simulacao = st.tabs([
-    "🚀 Primeiros Passos",
-    "📊 Visão Geral",
-    "🔍 Monitoramento Detalhado",
-    "⚙️ Permissões & Simulação"
-])
-
-# --- TAB 1: PRIMEIROS PASSOS ---
-with tab_passos:
-    st.markdown("### 🚀 Começando com o HydroTwin")
-    
-    with st.expander("O que o sistema faz de forma geral?"):
+with tab_inicio:
+    with st.expander("O que é o HydroTwin?"):
         st.markdown(
             """
-            - **Cadastra bancadas e culturas:** Vincula cada área de cultivo à sua planta correspondente.
-            - **Recebe leituras dos sensores:** Armazena histórico bruto de pH, EC, temperatura, umidade e nível.
-            - **Processamento automático:** Calcula *scores*, detecta tendências e identifica anomalias.
-            - **Geração de alertas:** Notifica quando algum parâmetro sai da zona segura.
+            É um sistema acadêmico de monitoramento e automação para cultivo hidropônico
+            NFT. A solução combina firmware no Arduino Mega com uma aplicação Python
+            executada localmente no Raspberry Pi. A interface é feita em Streamlit e
+            os dados são armazenados em SQLite.
             """
         )
 
-    with st.expander("Como cadastrar uma nova bancada?"):
+    with st.expander("O HydroTwin é um gêmeo digital ou usa inteligência artificial?"):
         st.markdown(
             """
-            1. Acesse o **Painel de Controle** no menu lateral.
-            2. Abra a aba **➕ Nova Bancada**.
-            3. Informe o **Nome da Bancada**, selecione a **Cultura Inicial** e defina a **Data de Plantio**.
-            4. Clique em **💾 Cadastrar Bancada**.
-            
-            *(Nota: Apenas usuários com perfil **Admin** podem cadastrar novas bancadas).*
+            A implementação atual deve ser descrita como um **sistema de monitoramento
+            e automação com análise de dados**. O código de processamento utiliza limites
+            operacionais, estatísticas, comparação com médias recentes e cálculo simples
+            de tendências. Não há, nas rotinas analisadas, um modelo de simulação física
+            do cultivo ou um modelo de inteligência artificial para previsão de crescimento.
             """
         )
 
-# --- TAB 2: VISÃO GERAL ---
-with tab_geral:
-    st.markdown("### 📊 Entendendo a Visão Geral")
-
-    with st.expander("O que vejo na página Visão Geral?"):
+    with st.expander("Como cadastro uma bancada?"):
         st.markdown(
             """
-            A página **Visão Geral** foi desenhada para leitura rápida em *dashboards* de acompanhamento:
-            * **Status das Bancadas:** Resumo de cor e estado atual de todas as bancadas ativas.
-            * **Indicadores Gerais (KPIs):** Valores consolidados mais recentes de pH, EC, Temperatura, Umidade e Nível do Tanque.
-            * **Alertas Ativos:** Lista centralizada de problemas que exigem atenção imediata.
+            1. Entre na plataforma com uma conta autorizada.
+            2. Abra **Painel de Controle – Bancadas**.
+            3. Acesse a aba de nova bancada, informe os dados solicitados e selecione a cultura.
+            4. Associe a bancada a um controlador disponível e informe os dados do primeiro filete.
+            5. Salve o cadastro.
+
+            A interface limita o vínculo a até duas bancadas por controlador. As opções
+            disponíveis podem depender dos controladores já cadastrados.
             """
         )
 
-    with st.expander("Como interpretar os KPIs da Visão Geral?"):
+    with st.expander("Qual é a diferença entre bancada e filete?"):
         st.markdown(
             """
-            * **pH e EC:** Indicam se a solução nutritiva está balanceada para a cultura ativa.
-            * **Nível do Tanque:** Exibe **OK** para nível adequado e **Baixo** quando necessita reabastecimento.
-            * **Temperatura e Umidade:** Auxiliam na gestão do microclima e circulação da solução.
+            A **bancada** é a unidade usada para associar o controlador e organizar as
+            leituras dos sensores. O **filete** representa uma parte do cultivo que pode
+            ter seus próprios dados de plantio e cultura. As leituras do firmware são
+            identificadas por bancada, não por filete individual.
             """
         )
 
-    with st.expander("Por que aparece 'Sem Dados' ou 'Nenhum KPI'?"):
-        st.write(
-            "Isso ocorre quando a bancada foi cadastrada recentemente e os sensores físicos "
-            "(ou o simulador) ainda não enviaram leituras suficientes para os cálculos estatísticos."
-        )
-
-# --- TAB 3: MONITORAMENTO DETALHADO ---
-with tab_detalhado:
-    st.markdown("### 🔍 Análise Aprofundada & Gráficos")
-
-    with st.expander("O que muda na página Monitoramento Detalhado?"):
+with tab_dados:
+    with st.expander("Quais variáveis são monitoradas?"):
         st.markdown(
             """
-            Esta página foca em **uma bancada por vez** e traz diagnósticos avançados:
-            * **Score de Risco:** Nível de severidade calculado a partir da janela de leituras.
-            * **Contribuição do Risco:** Mostra exatamente qual variável (ex: pH) está pesando mais para o alerta.
-            * **Anomalias:** Destaque visual de medições estatisticamente fora do padrão histórico.
-            * **Tendência Operacional:** Indica se a condição da bancada está *Melhorando*, *Estável* ou *Piorando*.
+            O protocolo de telemetria da aplicação recebe:
+            - pH;
+            - condutividade elétrica (EC);
+            - temperatura ambiente;
+            - umidade do ar;
+            - temperatura da água;
+            - luminosidade;
+            - estado da boia de nível do tanque.
+
+            A disponibilidade e a qualidade dos valores dependem dos sensores, da
+            calibração e da comunicação com o hardware.
             """
         )
 
-    with st.expander("Como usar os modos de visualização dos gráficos (Zona vs. Linha)?"):
+    with st.expander("Com que frequência chegam os dados?"):
         st.markdown(
             """
-            * **Modo Zona:** Exibe faixas coloridas indicando os limites ideais, de atenção e críticos de cada parâmetro.
-            * **Modo Linha:** Foca na evolução temporal contínua da métrica para facilitar a visualização de tendências.
+            O firmware incluído no snapshot transmite as leituras das duas bancadas
+            em intervalos de aproximadamente **10 segundos**. No Raspberry Pi, o
+            processamento periódico está configurado para rodar a cada **1 hora**,
+            quando há bancadas com novas leituras pendentes. O intervalo de aquisição
+            e o intervalo de processamento são coisas diferentes.
             """
         )
 
-# --- TAB 4: PERMISSÕES & SIMULAÇÃO ---
-with tab_simulacao:
-    st.markdown("### ⚙️ Perfis de Acesso e Testes")
-
-    with st.expander("Quais são os perfis de acesso (Roles)?"):
+    with st.expander("Onde os dados são armazenados?"):
         st.markdown(
             """
-            * **`admin` (Administrador):** Possui permissão total para cadastrar bancadas, adicionar filetes e alterar configurações.
-            * **`viewer` (Visualizador):** Perfil padrão de novos cadastros. Pode visualizar dashboards, gráficos e alertas, mas não realiza alterações.
+            A aplicação usa **SQLite**, um banco de dados local. As leituras recebidas
+            são registradas como dados brutos e, durante o processamento, são calculadas
+            estatísticas e indicadores que também são armazenados no banco.
             """
         )
 
-    with st.expander("Para que serve a Simulação?"):
-        st.write(
-            "A simulação gera telemetria sintética (dados falsos de sensores) em intervalos curtos. "
-            "Ela serve para testar e demonstrar todas as funcionalidades de alertas, gráficos e "
-            "processamento do HydroTwin mesmo sem sensores físicos conectados no momento."
+    with st.expander("O sistema precisa de internet?"):
+        st.markdown(
+            """
+            A arquitetura da aplicação é local: o backend utiliza SQLite e a interface
+            é servida pelo Streamlit no ambiente em que o sistema está instalado. O
+            monitoramento local não exige um serviço de banco de dados em nuvem. Acesso
+            remoto, notificações externas ou outros serviços conectados não devem ser
+            considerados garantidos pela implementação descrita aqui.
+            """
+        )
+
+    with st.expander("Por que aparece 'Sem dados' ou faltam gráficos/análises?"):
+        st.markdown(
+            """
+            Pode não haver leituras registradas para a bancada ou ainda não existir
+            quantidade suficiente de amostras para uma análise específica. A detecção
+            de anomalias usa uma janela de 30 leituras e a análise de tendências precisa
+            de pelo menos 60 leituras válidas por variável. Verifique também se o
+            controlador está conectado e se as mensagens estão sendo recebidas.
+            """
+        )
+
+with tab_analise:
+    with st.expander("Como o status operacional é calculado?"):
+        st.markdown(
+            """
+            O processamento obtém as médias de pH e EC na janela consultada e compara
+            esses valores com os limites operacionais da bancada/cultura. O status geral
+            é o mais severo entre os sensores avaliados: **Saudável**, **Atenção** ou
+            **Crítico**. Se não houver valores utilizáveis, o resultado pode ser
+            **Sem dados**.
+            """
+        )
+
+    with st.expander("O que é uma anomalia?"):
+        st.markdown(
+            """
+            A rotina compara o valor mais recente com a média das leituras anteriores
+            dentro de uma janela de até 30 amostras. Desvios percentuais de até 10% são
+            classificados como saudáveis; acima de 10% e até 20%, como atenção; acima
+            de 20%, como críticos. A rotina ignora a variável categórica de nível do tanque.
+            """
+        )
+
+    with st.expander("Como a tendência é calculada?"):
+        st.markdown(
+            """
+            A rotina compara a média de uma janela de 30 amostras com a média das
+            30 amostras anteriores. Variações absolutas inferiores a 5% são consideradas
+            estáveis; variações de 5% a menos de 20% são classificadas como subida ou
+            descida; variações de 20% ou mais são consideradas mudança brusca. A direção
+            da variação, por si só, não significa necessariamente melhora ou piora agronômica.
+            """
+        )
+
+    with st.expander("O sistema cria alertas?"):
+        st.markdown(
+            """
+            O backend sincroniza alertas de risco operacional quando o estado calculado
+            a partir de pH e EC indica atenção ou criticidade. As análises de anomalia e
+            tendência são registradas separadamente. O sistema não deve ser descrito
+            como prevendo falhas ou garantindo a saúde das plantas.
+            """
+        )
+
+    with st.expander("Todos os sensores influenciam o status consolidado?"):
+        st.markdown(
+            """
+            Não. Embora as estatísticas, as anomalias e as tendências considerem outras
+            variáveis, o status operacional consolidado implementado em `processar_sensor`
+            é calculado com **pH e EC**. A boia, a temperatura, a umidade e a luminosidade
+            aparecem como dados monitorados e podem participar de análises complementares,
+            mas não entram nesse status consolidado atual.
+            """
+        )
+
+with tab_controle:
+    with st.expander("O que o Arduino controla automaticamente?"):
+        st.markdown(
+            """
+            No firmware analisado, o Arduino controla:
+            - **Iluminação dimerizável:** ajusta o PWM entre intensidade total e reduzida
+              quando a leitura de luminosidade atinge o dobro do limite máximo recebido;
+            - **Iluminação com temporização:** executa um ciclo de 16 horas ligada e
+              8 horas desligada após a configuração da bancada;
+            - **Bombas de nutrientes:** calcula um tempo de acionamento com base na
+              diferença entre a EC medida e o limite mínimo recebido, com um limite
+              máximo de 5 segundos por acionamento.
+
+            O comportamento real depende da configuração, da calibração dos sensores,
+            da instalação elétrica/hidráulica e dos atuadores conectados.
+            """
+        )
+
+    with st.expander("O HydroTwin corrige o pH automaticamente?"):
+        st.markdown(
+            """
+            **Não, não na implementação analisada.** O firmware recebe os limites de
+            pH, mas a rotina de atuação das bombas de nutrientes utiliza a EC para
+            calcular o acionamento. Não há uma rotina equivalente de dosagem de corretor
+            de pH demonstrada nesse código.
+            """
+        )
+
+    with st.expander("O sistema controla automaticamente a vazão ou o nível da água?"):
+        st.markdown(
+            """
+            A telemetria recebida pela aplicação inclui o estado da boia do tanque,
+            mas o firmware analisado não apresenta uma rotina de controle automático
+            de vazão ou de reposição de água com base nessa leitura. Não confunda
+            monitorar uma variável com atuar automaticamente sobre ela.
+            """
+        )
+
+    with st.expander("Como funciona a comunicação com o Arduino?"):
+        st.markdown(
+            """
+            O Raspberry Pi recebe linhas de telemetria identificadas como `B1:` e `B2:`.
+            Também pode enviar mensagens `PARAMS` com identificadores e parâmetros da
+            cultura. O firmware responde com `PARAMS_OK` quando aceita a configuração
+            ou `PARAMS_ERROR` quando há erro. O backend mantém uma fila de envio e
+            acompanha a confirmação recebida.
+            """
+        )
+
+    with st.expander("Quais são os perfis de acesso?"):
+        st.markdown(
+            """
+            A aplicação utiliza os perfis **admin** e **viewer**. O administrador tem
+            permissões de gerenciamento que não estão disponíveis ao visualizador.
+            O acesso efetivo a cada página depende das regras de autorização configuradas
+            no sistema.
+            """
+        )
+
+    with st.expander("Para que serve o simulador?"):
+        st.markdown(
+            """
+            O simulador gera leituras sintéticas para exercitar o processamento e a
+            interface sem depender continuamente do hardware físico. Na implementação
+            atual, a página é restrita ao ambiente de desenvolvimento e a usuários com
+            perfil de administrador. Dados simulados não são medições reais do cultivo.
+            """
         )
 
 st.divider()
-
-# ==========================================
-# 🔗 RODAPÉ & REPOSITÓRIO
-# ==========================================
-st.markdown("### ❓ Dúvidas não encontradas?")
-st.info(
-    "📖 Para consultar a documentação técnica completa, código fonte e arquitetura do projeto, "
-    "acesse o repositório oficial no GitHub: **[HydroTwin GitHub Repository](https://github.com/acramin/HydroTwin)**"
+st.subheader("🔗 Documentação e código-fonte")
+st.markdown(
+    """
+    Para consultar a implementação e a documentação técnica, acesse o
+    [repositório HydroTwin no GitHub](https://github.com/acramin/HydroTwin).
+    """
 )

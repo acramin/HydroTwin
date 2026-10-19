@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import streamlit as st
 from hydrotwin import (
     autenticar_usuario,
@@ -121,88 +123,116 @@ else:
 st.divider()
 
 # ==========================================
-# 📘 APRESENTAÇÃO DO PROJETO (TCC SIMPLIFICADO)
+# 🌱 APRESENTAÇÃO DO PROJETO
 # ==========================================
 
-st.header("💡 O que é o HydroTwin?")
+st.header("🌱 Monitoramento e automação para hidroponia NFT")
 st.markdown(
     """
-    O **HydroTwin** é uma plataforma que aplica o conceito de **Gêmeo Digital (Digital Twin)** à agricultura urbana e à hidroponia em técnica NFT (*Nutrient Film Technique*). 
-    
-    A proposta conecta o cultivo físico do campo a um modelo digital no computador ou celular, 
-    permitindo monitorar e controlar o ambiente das plantas em tempo real de forma automatizada.
+    O **HydroTwin** é um sistema de monitoramento e automação aplicado a um cultivo
+    hidropônico que utiliza a técnica **NFT** (*Nutrient Film Technique*). Ele reúne
+    a aquisição de dados por sensores, o processamento local e uma interface para
+    acompanhar as bancadas e seus indicadores operacionais.
+
+    O projeto combina um **Arduino Mega**, responsável pela leitura dos sensores e
+    pelo acionamento de atuadores, com um **Raspberry Pi**, que recebe as leituras,
+    armazena os dados em **SQLite** e disponibiliza a interface desenvolvida em
+    **Streamlit**.
     """
 )
 
-# Métricas de Destaque
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Economia de Água", "Até 90%", "vs. Solo Tradicional")
-m2.metric("Monitoramento", "24/7", "Tempo Real")
-m3.metric("Foco", "NFT", "Hidroponia")
-m4.metric("Tecnologia", "IoT + IA", "Baixo Custo")
+m1, m2, m3 = st.columns(3)
+m1.metric("Técnica de cultivo", "NFT", "Recirculação da solução nutritiva")
+m2.metric("Processamento", "Local", "Raspberry Pi + SQLite")
+m3.metric("Interface", "Streamlit", "Painéis e histórico de leituras")
 
-st.markdown("---")
+st.divider()
+st.subheader("⚙️ Como o sistema funciona")
 
-# Seção: Como Funciona
-st.subheader("⚙️ Como Funciona o Sistema?")
-
-col_card1, col_card2, col_card3 = st.columns(3)
-
-with col_card1:
+col1, col2, col3 = st.columns(3)
+with col1:
     with st.container(border=True, height="stretch"):
-        st.markdown("### 📡 1. Coleta de Dados")
+        st.markdown("### 📡 1. Aquisição")
         st.write(
-            "Sensores medem continuamente os parâmetros vitais do cultivo:\n"
-            "* **Qualidade da Água:** pH e Condutividade Elétrica (EC)\n"
-            "* **Ambiente:** Temperatura, Umidade e Luminosidade\n"
-            "* **Nível do Tanque:** Reservatório de nutrientes"
+            "O firmware lê pH, condutividade elétrica (EC), temperatura da água, "
+            "temperatura e umidade do ar, luminosidade e estado da boia de nível "
+            "em cada uma das duas bancadas conectadas ao Arduino."
+        )
+with col2:
+    with st.container(border=True, height="stretch"):
+        st.markdown("### 🗃️ 2. Supervisão")
+        st.write(
+            "O Raspberry Pi recebe as mensagens do Arduino, registra as leituras "
+            "brutas no banco SQLite e executa o processamento periódico. A aplicação "
+            "calcula estatísticas, avalia o estado operacional com base em pH e EC "
+            "e analisa anomalias e tendências nas séries de dados."
+        )
+with col3:
+    with st.container(border=True, height="stretch"):
+        st.markdown("### 🔧 3. Atuação")
+        st.write(
+            "O Arduino controla a iluminação e pode acionar bombas de nutrientes "
+            "conforme a lógica embarcada e os parâmetros de cultura recebidos. "
+            "O painel permite acompanhar o sistema; nem toda variável monitorada "
+            "possui correção automática."
         )
 
-with col_card2:
-    with st.container(border=True, height="stretch"):
-        st.markdown("### 🧠 2. Processamento")
-        st.write(
-            "Microcontroladores (como ESP32/Arduino) e minicomputadores (Raspberry Pi) "
-            "processam as leituras e calculam a necessidade de ajustes na solução nutritiva."
-        )
+st.divider()
+st.subheader("🧪 O que é monitorado?")
+sensores = [
+    ("pH", "Indicador da acidez/alcalinidade da solução."),
+    ("EC", "Condutividade elétrica usada como indicador da concentração iônica."),
+    ("Temperatura da água", "Temperatura da solução nutritiva."),
+    ("Temperatura e umidade do ar", "Condições do ambiente ao redor do cultivo."),
+    ("Luminosidade", "Leitura do sensor de luz instalado na bancada."),
+    ("Nível do tanque", "Estado informado pela boia de nível."),
+]
+cols = st.columns(3)
+for i, (nome, descricao) in enumerate(sensores):
+    with cols[i % 3]:
+        with st.container(border=True, height="stretch"):
+            st.markdown(f"**{nome}**")
+            st.caption(descricao)
 
-with col_card3:
-    with st.container(border=True, height="stretch"):
-        st.markdown("### 🔄 3. Ação & Resposta")
-        st.write(
-            "O sistema dispara alertas, aciona dosadores de correção ou bombas d'água "
-            "automaticamente para garantir a saúde das plantas sem desperdícios."
-        )
-
-st.markdown("---")
-
-# Seção: Arquitetura NFT
-col_img, col_txt = st.columns([1.2, 1])
-
+st.divider()
+col_img, col_txt = st.columns([1.1, 1])
 with col_img:
-    st.image(
-        "https://raw.githubusercontent.com/acramin/HydroTwin/refs/heads/dev/app/assets/esquema_NFT.png",
-        caption="Esquema da Técnica de Fluxo Laminar de Nutrientes (NFT) integrada ao HydroTwin",
-        width='stretch',
-    )
-
+    caminho_esquema = Path(__file__).resolve().parents[1] / "assets" / "esquema_NFT.png"
+    if caminho_esquema.exists():
+        st.image(
+            str(caminho_esquema),
+            caption="Esquema ilustrativo da técnica hidropônica NFT.",
+            width="stretch",
+        )
+    else:
+        st.info("O esquema NFT não foi encontrado em app/assets/esquema_NFT.png.")
 with col_txt:
-    st.subheader("🌱 A Técnica NFT & Automação")
+    st.subheader("🌿 Por que NFT?")
     st.markdown(
         """
-        Na técnica **NFT**, as raízes das plantas recebem uma fina lâmina de água enriquecida com nutrientes. 
-        
-        **Por que automatizar com o HydroTwin?**
-        * **Sem surpresas:** Mudanças bruscas no pH ou na temperatura da água são detectadas na hora.
-        * **Acessibilidade:** Desenvolvido com hardware acessível para pequenos e médios produtores.
-        * **Sustentabilidade:** Uso circular da água e insumos, evitando contaminação do solo e perdas na produção.
+        Na técnica **NFT**, uma lâmina de solução nutritiva circula pelos canais
+        de cultivo e entra em contato com as raízes. O HydroTwin foi desenvolvido
+        para apoiar a supervisão desse processo por meio de leituras, histórico,
+        indicadores operacionais e recursos de automação embarcada.
+
+        **Importante:** o software não é um modelo de simulação de um gêmeo digital
+        nem utiliza inteligência artificial para prever o crescimento das plantas.
+        As análises implementadas são baseadas em limites, estatística de leituras
+        recentes e comparação de médias.
         """
     )
 
-st.markdown("---")
-
-# Rodapé
+st.divider()
+st.subheader("🧭 Explore a plataforma")
+st.markdown(
+    """
+    - **Painel de Controle – Bancadas:** cadastro e gerenciamento de bancadas,
+      culturas, filetes e associação a controladores.
+    - **Visão Geral:** resumo do estado operacional e dos dados processados.
+    - **Monitoramento Detalhado:** estatísticas, histórico, anomalias e tendências.
+    - **FAQ:** explicações sobre funcionamento, leituras, automação e limitações.
+    """
+)
 st.caption(
-    "🌱 **HydroTwin** — Solução inteligente para hidroponia automatizada. "
-    "Desenvolvido como projeto de pesquisa e inovação tecnológica."
+    "HydroTwin — projeto acadêmico de monitoramento e automação local para cultivo hidropônico."
 )

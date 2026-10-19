@@ -7,4 +7,4 @@ cd /caminho/para/seu/projeto
 source venv/bin/activate
 
 # Executa o banco e, se der sucesso (código 0), roda o Streamlit
-python -m hydrotwin.db.init_db && streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+python -m hydrotwin.db.init_db && streamlit run main.py --server.port 8501 --server.address 0.0.0.0

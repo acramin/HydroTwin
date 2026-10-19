@@ -1,0 +1,10 @@
+version: "3"
+
+agent:
+  authtoken: token123
+
+endpoints:
+  - name: project_name
+    url: https://your_domain.com
+    upstream:
+      url: PORT

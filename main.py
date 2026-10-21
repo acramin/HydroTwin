@@ -68,12 +68,14 @@ simulador = st.Page("app/pages/6_🕹️_Simulador.py", title="Simulador")
 
 acessos = st.Page("app/pages/7_🪪_Controle_de_Acesso.py", title="Controle de Acesso")
 
+time = st.Page("app/pages/8_🏆_Time.py", title="Time")
+
 usuario = get_current_user()
 
 # --- CONSTRUÇÃO DO MENU NAVEGÁVEL (AGRUPADO) ---
 if usuario is None:
     # Usuário não autenticado: exibição mínima
-    pages_config = {"📌 Principal": [home], "❓ Suporte": [faq]}
+    pages_config = {"📌 Principal": [home], "❓ Suporte": [faq], "🏆 Time" : [time]}
 else:
     # Usuário autenticado: monta dicionário estruturado por seções
     user_role = usuario.get("role", "viewer")
@@ -82,7 +84,7 @@ else:
     pages_config = {}
 
     # 1. Seção Principal
-    pages_config["📌 Principal"] = [home]
+    pages_config["📌 Principal"] = [home, time]
 
     # 2. Seção de Monitoramento Operacional
     secao_monitoramento = []
